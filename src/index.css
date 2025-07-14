@@ -1,68 +1,98 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
   }
-  a:hover {
-    color: #747bff;
+  
+  body {
+    @apply bg-gradient-to-br from-focus-50 via-white to-motivate-50;
+    @apply min-h-screen;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
   }
+  
+  .glass-card-dark {
+    @apply bg-focus-900/10 backdrop-blur-md border border-focus-200/20;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-focus-500 to-focus-600 hover:from-focus-600 hover:to-focus-700;
+    @apply text-white font-medium px-6 py-3 rounded-xl;
+    @apply transform transition-all duration-200 hover:scale-105 hover:shadow-lg;
+    @apply focus:outline-none focus:ring-2 focus:ring-focus-500 focus:ring-offset-2;
+  }
+  
+  .btn-success {
+    @apply bg-gradient-to-r from-motivate-500 to-motivate-600 hover:from-motivate-600 hover:to-motivate-700;
+    @apply text-white font-medium px-4 py-2 rounded-lg;
+    @apply transform transition-all duration-200 hover:scale-105;
+    @apply focus:outline-none focus:ring-2 focus:ring-motivate-500 focus:ring-offset-2;
+  }
+  
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700;
+    @apply text-white font-medium px-4 py-2 rounded-lg;
+    @apply transform transition-all duration-200 hover:scale-105;
+    @apply focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-focus-200;
+    @apply bg-white/50 backdrop-blur-sm;
+    @apply focus:outline-none focus:ring-2 focus:ring-focus-500 focus:border-transparent;
+    @apply transition-all duration-200;
+    @apply placeholder-focus-400;
+  }
+  
+  .tab-button {
+    @apply px-6 py-3 font-medium rounded-lg transition-all duration-200;
+    @apply hover:bg-focus-50 focus:outline-none focus:ring-2 focus:ring-focus-500;
+  }
+  
+  .tab-button-active {
+    @apply bg-gradient-to-r from-focus-500 to-focus-600 text-white shadow-lg;
+  }
+  
+  .todo-item {
+    @apply glass-card rounded-xl p-4 mb-3;
+    @apply transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+    @apply border-l-4 border-l-focus-400;
+  }
+  
+  .todo-item-completed {
+    @apply opacity-60 border-l-motivate-400;
+  }
+  
+  .blocked-site-item {
+    @apply glass-card rounded-xl p-4 mb-3;
+    @apply transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+    @apply border-l-4 border-l-accent-400;
+    @apply bg-gradient-to-r from-accent-50/50 to-white/80;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-focus-50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-focus-300 rounded-full hover:bg-focus-400;
+}
+
+/* Smooth focus transitions */
+* {
+  @apply focus:transition-all focus:duration-200;
 }
