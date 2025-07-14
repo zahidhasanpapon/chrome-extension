@@ -5,17 +5,17 @@ const DEFAULT_PROFILES = {
   Work: {
     blockedSites: ["youtube.com", "reddit.com"],
     dailyLimitMinutes: 30,
-    slackNotification: true
+    slackNotification: true,
   },
   Study: {
     blockedSites: ["facebook.com", "netflix.com"],
     dailyLimitMinutes: 45,
-    motivationalQuotes: true
+    motivationalQuotes: true,
   },
   Entertainment: {
     blockedSites: [],
-    dailyLimitMinutes: 999
-  }
+    dailyLimitMinutes: 999,
+  },
 };
 
 // Initialize storage with default profiles if not present
@@ -24,7 +24,7 @@ chrome.runtime.onInstalled.addListener(() => {
     if (!result.profiles) {
       chrome.storage.local.set({
         profiles: DEFAULT_PROFILES,
-        activeProfile: null
+        activeProfile: null,
       });
     }
   });
@@ -40,11 +40,26 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     chrome.storage.local.get(["activeProfile", "profiles"], (data) => {
       sendResponse({
         activeProfile: data.activeProfile,
-        profileData: data.profiles ? data.profiles[data.activeProfile] : null
+        profileData: data.profiles ? data.profiles[data.activeProfile] : null,
       });
     });
     return true; // async
   }
+
+  // Handle opening new tab from blocked page
+  if (msg.action === "openNewTab") {
+    chrome.tabs.create({ url: "chrome://newtab/" });
+    return true;
+  }
+
+  // Handle getting blocked sites
+  if (msg.action === "getBlockedSites") {
+    chrome.storage.local.get(["blockedSites"], (data) => {
+      sendResponse({ blockedSites: data.blockedSites || [] });
+    });
+    return true;
+  }
+
   // Add more message handlers as needed
 });
 
