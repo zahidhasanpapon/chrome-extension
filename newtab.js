@@ -21,6 +21,7 @@ class TodoApp {
       this.todos = result.todos || [];
     } catch (error) {
       console.error("Error loading todos:", error);
+      this.showNotification("Failed to load todos. Please refresh the page.", "error");
       this.todos = [];
     }
   }
@@ -31,6 +32,7 @@ class TodoApp {
       this.blockedSites = result.blockedSites || [];
     } catch (error) {
       console.error("Error loading blocked sites:", error);
+      this.showNotification("Failed to load blocked sites. Please refresh the page.", "error");
       this.blockedSites = [];
     }
   }
@@ -40,6 +42,7 @@ class TodoApp {
       await chrome.storage.local.set({ todos: this.todos });
     } catch (error) {
       console.error("Error saving todos:", error);
+      this.showNotification("Failed to save todos", "error");
     }
   }
 
@@ -50,7 +53,24 @@ class TodoApp {
       this.notifyTabsOfBlockedSitesUpdate();
     } catch (error) {
       console.error("Error saving blocked sites:", error);
+      this.showNotification("Failed to save blocked sites", "error");
     }
+  }
+
+  // Debounced save functions for better performance
+  debouncedSaveTodos = this.debounce(() => this.saveTodos(), 500);
+  debouncedSaveBlockedSites = this.debounce(() => this.saveBlockedSites(), 500);
+
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
   }
 
   async notifyTabsOfBlockedSitesUpdate() {
@@ -119,6 +139,18 @@ class TodoApp {
 
     if (!text) {
       todoInput.focus();
+      this.showNotification("Please enter a task description", "error");
+      return;
+    }
+
+    if (text.length > 200) {
+      this.showNotification("Task description is too long (max 200 characters)", "error");
+      return;
+    }
+
+    // Check for duplicate todos
+    if (this.todos.some(todo => todo.text.toLowerCase() === text.toLowerCase())) {
+      this.showNotification("This task already exists", "error");
       return;
     }
 
@@ -135,21 +167,37 @@ class TodoApp {
 
     this.saveTodos();
     this.render();
+    this.showNotification("Task added successfully!", "success");
   }
 
   toggleTodo(id) {
     const todo = this.todos.find((t) => t.id === id);
     if (todo) {
       todo.completed = !todo.completed;
+      todo.completedAt = todo.completed ? new Date().toISOString() : null;
       this.saveTodos();
       this.render();
+      
+      const action = todo.completed ? "completed" : "uncompleted";
+      this.showNotification(`Task ${action}!`, "success");
     }
   }
 
   deleteTodo(id) {
+    const todo = this.todos.find((t) => t.id === id);
+    if (!todo) return;
+
+    // Show confirmation for non-completed todos
+    if (!todo.completed) {
+      if (!confirm(`Are you sure you want to delete "${todo.text}"?`)) {
+        return;
+      }
+    }
+
     this.todos = this.todos.filter((t) => t.id !== id);
     this.saveTodos();
     this.render();
+    this.showNotification("Task deleted", "info");
   }
 
   escapeHtml(text) {
@@ -165,14 +213,27 @@ class TodoApp {
 
     if (!url) {
       blockedSiteInput.focus();
+      this.showNotification("Please enter a website URL", "error");
       return;
     }
 
     // Clean up URL - remove protocol and www, extract domain
     const cleanUrl = this.cleanUrl(url);
 
+    // Validate URL format
+    if (!this.isValidUrl(cleanUrl)) {
+      this.showNotification("Please enter a valid website URL (e.g., facebook.com)", "error");
+      return;
+    }
+
+    // Check for localhost or IP addresses
+    if (this.isLocalOrPrivateUrl(cleanUrl)) {
+      this.showNotification("Cannot block localhost or private IP addresses", "error");
+      return;
+    }
+
     if (this.blockedSites.includes(cleanUrl)) {
-      alert("This site is already blocked!");
+      this.showNotification("This site is already blocked!", "error");
       blockedSiteInput.value = "";
       blockedSiteInput.focus();
       return;
@@ -184,6 +245,33 @@ class TodoApp {
 
     this.saveBlockedSites();
     this.renderBlockedSites();
+    this.showNotification(`Successfully blocked ${cleanUrl}`, "success");
+  }
+
+  isValidUrl(url) {
+    // Basic URL validation - should contain at least one dot and valid characters
+    const urlPattern = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+    return urlPattern.test(url) && url.includes('.');
+  }
+
+  isLocalOrPrivateUrl(url) {
+    const localPatterns = [
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0',
+      '::1',
+      /^192\.168\./,
+      /^10\./,
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./
+    ];
+    
+    return localPatterns.some(pattern => {
+      if (typeof pattern === 'string') {
+        return url.includes(pattern);
+      } else {
+        return pattern.test(url);
+      }
+    });
   }
 
   cleanUrl(url) {
@@ -249,16 +337,32 @@ class TodoApp {
 
   // Export/Import functionality
   exportBlockedSites() {
-    const dataStr = JSON.stringify(this.blockedSites, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    try {
+      if (this.blockedSites.length === 0) {
+        this.showNotification("No blocked sites to export", "error");
+        return;
+      }
 
-    const exportFileDefaultName = "blocked-sites.json";
+      const exportData = {
+        blockedSites: this.blockedSites,
+        exportDate: new Date().toISOString(),
+        version: "1.0"
+      };
 
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+      const exportFileDefaultName = `blocked-sites-${new Date().toISOString().split('T')[0]}.json`;
+
+      const linkElement = document.createElement("a");
+      linkElement.setAttribute("href", dataUri);
+      linkElement.setAttribute("download", exportFileDefaultName);
+      linkElement.click();
+
+      this.showNotification(`Exported ${this.blockedSites.length} blocked sites`, "success");
+    } catch (error) {
+      console.error("Export error:", error);
+      this.showNotification("Failed to export blocked sites", "error");
+    }
   }
 
   importBlockedSites() {
@@ -267,33 +371,74 @@ class TodoApp {
     input.accept = ".json";
     input.onchange = (e) => {
       const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const importedSites = JSON.parse(e.target.result);
-            if (Array.isArray(importedSites)) {
-              // Merge with existing sites, avoiding duplicates
-              const newSites = importedSites.filter(
-                (site) => !this.blockedSites.includes(site)
-              );
-              this.blockedSites = [...this.blockedSites, ...newSites];
-              this.saveBlockedSites();
-              this.renderBlockedSites();
-              alert(
-                `Successfully imported ${newSites.length} new blocked sites!`
-              );
-            } else {
-              alert("Invalid file format. Please select a valid JSON file.");
-            }
-          } catch (error) {
-            alert(
-              "Error reading file. Please make sure it's a valid JSON file."
-            );
-          }
-        };
-        reader.readAsText(file);
+      if (!file) return;
+
+      // Check file size (max 1MB)
+      if (file.size > 1024 * 1024) {
+        this.showNotification("File is too large (max 1MB)", "error");
+        return;
       }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          let importedSites = [];
+
+          // Handle both old format (array) and new format (object)
+          if (Array.isArray(data)) {
+            importedSites = data;
+          } else if (data.blockedSites && Array.isArray(data.blockedSites)) {
+            importedSites = data.blockedSites;
+          } else {
+            this.showNotification("Invalid file format. Expected array of URLs or proper export format.", "error");
+            return;
+          }
+
+          // Validate imported sites
+          const validSites = importedSites.filter(site => {
+            if (typeof site !== 'string') return false;
+            const cleanedSite = this.cleanUrl(site);
+            return this.isValidUrl(cleanedSite) && !this.isLocalOrPrivateUrl(cleanedSite);
+          });
+
+          if (validSites.length === 0) {
+            this.showNotification("No valid sites found in the imported file", "error");
+            return;
+          }
+
+          // Merge with existing sites, avoiding duplicates
+          const newSites = validSites
+            .map(site => this.cleanUrl(site))
+            .filter(site => !this.blockedSites.includes(site));
+
+          if (newSites.length === 0) {
+            this.showNotification("All sites from the file are already blocked", "info");
+            return;
+          }
+
+          this.blockedSites = [...this.blockedSites, ...newSites];
+          this.saveBlockedSites();
+          this.renderBlockedSites();
+          
+          const skippedCount = validSites.length - newSites.length;
+          let message = `Successfully imported ${newSites.length} new blocked sites!`;
+          if (skippedCount > 0) {
+            message += ` (${skippedCount} duplicates skipped)`;
+          }
+          this.showNotification(message, "success");
+
+        } catch (error) {
+          console.error("Import error:", error);
+          this.showNotification("Error reading file. Please make sure it's a valid JSON file.", "error");
+        }
+      };
+
+      reader.onerror = () => {
+        this.showNotification("Error reading file", "error");
+      };
+
+      reader.readAsText(file);
     };
     input.click();
   }
@@ -388,6 +533,84 @@ class TodoApp {
     document.getElementById("totalTasks").textContent = totalTasks;
     document.getElementById("completedTasks").textContent = completedTasks;
     document.getElementById("pendingTasks").textContent = pendingTasks;
+  }
+
+  // Notification system
+  showNotification(message, type = "info") {
+    // Remove existing notifications
+    const existingNotification = document.querySelector(".notification");
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+
+    const notification = document.createElement("div");
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+      <span>${this.escapeHtml(message)}</span>
+      <button class="notification-close" aria-label="Close notification">&times;</button>
+    `;
+
+    // Add styles
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === "error" ? "#f44336" : type === "success" ? "#4caf50" : "#2196f3"};
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: 300px;
+      animation: slideIn 0.3s ease-out;
+    `;
+
+    // Add animation keyframes if not already added
+    if (!document.querySelector("#notification-styles")) {
+      const style = document.createElement("style");
+      style.id = "notification-styles";
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+        .notification-close {
+          background: none;
+          border: none;
+          color: white;
+          font-size: 18px;
+          cursor: pointer;
+          padding: 0;
+          margin: 0;
+          line-height: 1;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    document.body.appendChild(notification);
+
+    // Close button functionality
+    const closeBtn = notification.querySelector(".notification-close");
+    closeBtn.addEventListener("click", () => {
+      notification.style.animation = "slideOut 0.3s ease-out";
+      setTimeout(() => notification.remove(), 300);
+    });
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.animation = "slideOut 0.3s ease-out";
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, 5000);
   }
 }
 
