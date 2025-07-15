@@ -137,6 +137,23 @@ class TodoApp {
       }
     });
 
+    // Shortcut buttons event listeners
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("shortcut-btn")) {
+        const site = e.target.dataset.site;
+        const isBlocked = this.blockSiteFromShortcut(site);
+
+        // Update button appearance
+        if (isBlocked) {
+          e.target.classList.add("blocked");
+          e.target.textContent = `Unblock ${site}`;
+        } else {
+          e.target.classList.remove("blocked");
+          e.target.textContent = `Block ${site}`;
+        }
+      }
+    });
+
     // Export/Import event listeners
     exportBtn.addEventListener("click", () => this.exportBlockedSites());
     importBtn.addEventListener("click", () => this.importBlockedSites());
@@ -151,6 +168,25 @@ class TodoApp {
 
     // Focus on input when page loads
     todoInput.focus();
+
+    // Update shortcut button states on page load
+    this.updateShortcutButtonStates();
+  }
+
+  updateShortcutButtonStates() {
+    const shortcutBtns = document.querySelectorAll(".shortcut-btn");
+    shortcutBtns.forEach((btn) => {
+      const site = btn.dataset.site;
+      const cleanUrl = this.cleanUrl(site);
+
+      if (this.blockedSites.includes(cleanUrl)) {
+        btn.classList.add("blocked");
+        btn.textContent = `Unblock ${site}`;
+      } else {
+        btn.classList.remove("blocked");
+        btn.textContent = `Block ${site}`;
+      }
+    });
   }
 
   addTodo() {
@@ -184,6 +220,7 @@ class TodoApp {
       text: text,
       completed: false,
       createdAt: new Date().toISOString(),
+      subTodos: [], // Add sub-todos support
     };
 
     this.todos.unshift(todo); // Add to beginning of array
@@ -223,6 +260,104 @@ class TodoApp {
     this.saveTodos();
     this.render();
     this.showNotification("Task deleted", "info");
+  }
+
+  // Sub-todo methods
+  showSubTodoInput(todoId) {
+    const todo = this.todos.find((t) => t.id === todoId);
+    if (!todo) return;
+
+    const existingInput = document.querySelector(".sub-todo-input-container");
+    if (existingInput) {
+      existingInput.remove();
+    }
+
+    const todoItem = document
+      .querySelector(`[data-todo-id="${todoId}"]`)
+      .closest(".todo-item");
+    const inputContainer = document.createElement("div");
+    inputContainer.className = "sub-todo-input-container";
+    inputContainer.innerHTML = `
+      <input type="text" class="sub-todo-input" placeholder="Add sub-task..." maxlength="100" />
+      <button class="sub-todo-add-btn">Add</button>
+      <button class="sub-todo-cancel-btn">Cancel</button>
+    `;
+
+    const input = inputContainer.querySelector(".sub-todo-input");
+    const addBtn = inputContainer.querySelector(".sub-todo-add-btn");
+    const cancelBtn = inputContainer.querySelector(".sub-todo-cancel-btn");
+
+    addBtn.addEventListener("click", () =>
+      this.addSubTodo(todoId, input.value.trim())
+    );
+    cancelBtn.addEventListener("click", () => inputContainer.remove());
+
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        this.addSubTodo(todoId, input.value.trim());
+      } else if (e.key === "Escape") {
+        inputContainer.remove();
+      }
+    });
+
+    todoItem.parentNode.insertBefore(inputContainer, todoItem.nextSibling);
+    input.focus();
+  }
+
+  addSubTodo(todoId, text) {
+    if (!text) {
+      this.showNotification("Please enter a sub-task description", "error");
+      return;
+    }
+
+    const todo = this.todos.find((t) => t.id === todoId);
+    if (!todo) return;
+
+    if (!todo.subTodos) {
+      todo.subTodos = [];
+    }
+
+    const subTodo = {
+      id: Date.now().toString(),
+      text: text,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    todo.subTodos.push(subTodo);
+    this.saveTodos();
+    this.render();
+    this.showNotification("Sub-task added successfully!", "success");
+  }
+
+  toggleSubTodo(todoId, subTodoId) {
+    const todo = this.todos.find((t) => t.id === todoId);
+    if (!todo || !todo.subTodos) return;
+
+    const subTodo = todo.subTodos.find((st) => st.id === subTodoId);
+    if (subTodo) {
+      subTodo.completed = !subTodo.completed;
+      this.saveTodos();
+      this.render();
+      this.showNotification(
+        `Sub-task ${subTodo.completed ? "completed" : "reopened"}`,
+        "success"
+      );
+    }
+  }
+
+  deleteSubTodo(todoId, subTodoId) {
+    const todo = this.todos.find((t) => t.id === todoId);
+    if (!todo || !todo.subTodos) return;
+
+    const index = todo.subTodos.findIndex((st) => st.id === subTodoId);
+    if (index !== -1) {
+      const subTodo = todo.subTodos[index];
+      todo.subTodos.splice(index, 1);
+      this.saveTodos();
+      this.render();
+      this.showNotification(`Sub-task "${subTodo.text}" deleted`, "success");
+    }
   }
 
   escapeHtml(text) {
@@ -277,6 +412,27 @@ class TodoApp {
     this.saveBlockedSites();
     this.renderBlockedSites();
     this.showNotification(`Successfully blocked ${cleanUrl}`, "success");
+  }
+
+  blockSiteFromShortcut(siteUrl) {
+    // Clean the URL - remove protocol and www
+    const cleanUrl = this.cleanUrl(siteUrl);
+
+    if (this.blockedSites.includes(cleanUrl)) {
+      // If already blocked, unblock it
+      this.blockedSites = this.blockedSites.filter((site) => site !== cleanUrl);
+      this.saveBlockedSites();
+      this.renderBlockedSites();
+      this.showNotification(`Successfully unblocked ${cleanUrl}`, "success");
+      return false; // Return false to indicate unblocked
+    } else {
+      // If not blocked, block it
+      this.blockedSites.push(cleanUrl);
+      this.saveBlockedSites();
+      this.renderBlockedSites();
+      this.showNotification(`Successfully blocked ${cleanUrl}`, "success");
+      return true; // Return true to indicate blocked
+    }
   }
 
   isValidUrl(url) {
@@ -524,7 +680,8 @@ class TodoApp {
       if (this.todos.length > 0) {
         emptyState.innerHTML = "<p>🤷 No tasks match your search.</p>";
       } else {
-        emptyState.innerHTML = "<p>🎉 No tasks yet! Add your first task above.</p>";
+        emptyState.innerHTML =
+          "<p>🎉 No tasks yet! Add your first task above.</p>";
       }
     } else {
       emptyState.style.display = "none";
@@ -536,6 +693,11 @@ class TodoApp {
         li.innerHTML = `
                     <span class="todo-text">${this.escapeHtml(todo.text)}</span>
                     <div class="todo-actions">
+                        <button class="add-subtodo-btn" data-todo-id="${
+                          todo.id
+                        }" title="Add Sub-task">
+                            ➕ Sub
+                        </button>
                         <button class="complete-btn" data-todo-id="${
                           todo.id
                         }" data-action="toggle">
@@ -550,13 +712,61 @@ class TodoApp {
                 `;
 
         // Add event listeners to the buttons
+        const addSubTodoBtn = li.querySelector(".add-subtodo-btn");
         const completeBtn = li.querySelector(".complete-btn");
         const deleteBtn = li.querySelector(".delete-btn");
 
+        addSubTodoBtn.addEventListener("click", () =>
+          this.showSubTodoInput(todo.id)
+        );
         completeBtn.addEventListener("click", () => this.toggleTodo(todo.id));
         deleteBtn.addEventListener("click", () => this.deleteTodo(todo.id));
 
         todoList.appendChild(li);
+
+        // Render sub-todos if they exist
+        if (todo.subTodos && todo.subTodos.length > 0) {
+          const subTodoContainer = document.createElement("div");
+          subTodoContainer.className = "sub-todo-container";
+
+          todo.subTodos.forEach((subTodo) => {
+            const subLi = document.createElement("div");
+            subLi.className = `sub-todo-item ${
+              subTodo.completed ? "completed" : ""
+            }`;
+            subLi.innerHTML = `
+              <span class="sub-todo-text">${this.escapeHtml(
+                subTodo.text
+              )}</span>
+              <div class="sub-todo-actions">
+                <button class="sub-complete-btn" data-todo-id="${
+                  todo.id
+                }" data-subtodo-id="${subTodo.id}">
+                  ${subTodo.completed ? "↩️" : "✅"}
+                </button>
+                <button class="sub-delete-btn" data-todo-id="${
+                  todo.id
+                }" data-subtodo-id="${subTodo.id}">
+                  🗑️
+                </button>
+              </div>
+            `;
+
+            const subCompleteBtn = subLi.querySelector(".sub-complete-btn");
+            const subDeleteBtn = subLi.querySelector(".sub-delete-btn");
+
+            subCompleteBtn.addEventListener("click", () =>
+              this.toggleSubTodo(todo.id, subTodo.id)
+            );
+            subDeleteBtn.addEventListener("click", () =>
+              this.deleteSubTodo(todo.id, subTodo.id)
+            );
+
+            subTodoContainer.appendChild(subLi);
+          });
+
+          todoList.appendChild(subTodoContainer);
+        }
       });
     }
 
@@ -596,6 +806,7 @@ class TodoApp {
     }
 
     this.updateBlockedSitesStats();
+    this.updateShortcutButtonStates();
   }
 
   updateStats() {
@@ -855,24 +1066,119 @@ class TodoApp {
       const groupItem = document.createElement("div");
       groupItem.className = "bookmark-group";
       groupItem.innerHTML = `
-        <div class="bookmark-group-info">
-          <div class="bookmark-group-name">${this.escapeHtml(group.name)}</div>
-          <div class="bookmark-group-count">${
-            group.tabs.length
-          } tabs • ${new Date(group.created).toLocaleDateString()}</div>
+        <div class="bookmark-group-header" data-group-id="${group.id}">
+          <div class="bookmark-group-info">
+            <div class="bookmark-group-name">${this.escapeHtml(
+              group.name
+            )}</div>
+            <div class="bookmark-group-count">${
+              group.tabs.length
+            } tabs • ${new Date(group.created).toLocaleDateString()}</div>
+          </div>
+          <div class="bookmark-group-actions">
+            <button class="bookmark-group-expand" data-group-id="${
+              group.id
+            }">▶</button>
+            <button class="bookmark-group-btn open" data-group-id="${
+              group.id
+            }">Open All</button>
+            <button class="bookmark-group-btn delete" data-group-id="${
+              group.id
+            }">Delete</button>
+          </div>
         </div>
-        <div class="bookmark-group-actions">
-          <button class="bookmark-group-btn open" data-group-id="${
-            group.id
-          }">Open All</button>
-          <button class="bookmark-group-btn delete" data-group-id="${
-            group.id
-          }">Delete</button>
+        <div class="bookmark-group-tabs" data-group-id="${group.id}">
+          ${group.tabs
+            .map(
+              (tab) => `
+            <div class="bookmark-tab-item" data-url="${this.escapeHtml(
+              tab.url
+            )}">
+              <img class="bookmark-tab-favicon" src="${
+                tab.favIconUrl ||
+                'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" fill="%23f0f0f0"/><text x="8" y="11" font-family="Arial" font-size="10" text-anchor="middle" fill="%23666">🌐</text></svg>'
+              }" 
+                   onerror="this.src='data:image/svg+xml;charset=utf-8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 16 16&quot;><rect width=&quot;16&quot; height=&quot;16&quot; fill=&quot;%23f0f0f0&quot;/><text x=&quot;8&quot; y=&quot;11&quot; font-family=&quot;Arial&quot; font-size=&quot;10&quot; text-anchor=&quot;middle&quot; fill=&quot;%23666&quot;>🌐</text></svg>'" />
+              <div class="bookmark-tab-title">${this.escapeHtml(
+                tab.title
+              )}</div>
+              <div class="bookmark-tab-url">${this.escapeHtml(
+                new URL(tab.url).hostname
+              )}</div>
+            </div>
+          `
+            )
+            .join("")}
         </div>
       `;
 
       groupsList.appendChild(groupItem);
     });
+
+    // Add event listeners for expand/collapse
+    this.setupExpandCollapseListeners();
+  }
+
+  setupExpandCollapseListeners() {
+    document.querySelectorAll(".bookmark-group-expand").forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const groupId = button.dataset.groupId;
+        this.toggleGroupExpansion(groupId);
+      });
+    });
+
+    document.querySelectorAll(".bookmark-group-header").forEach((header) => {
+      header.addEventListener("click", (e) => {
+        // Only expand if clicked on header area, not on buttons
+        if (!e.target.classList.contains("bookmark-group-btn")) {
+          const groupId = header.dataset.groupId;
+          this.toggleGroupExpansion(groupId);
+        }
+      });
+    });
+
+    // Add click listeners for individual tab items
+    document.querySelectorAll(".bookmark-tab-item").forEach((tabItem) => {
+      tabItem.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const url = tabItem.dataset.url;
+        this.openSingleTab(url);
+      });
+    });
+  }
+
+  toggleGroupExpansion(groupId) {
+    const tabsContainer = document.querySelector(
+      `.bookmark-group-tabs[data-group-id="${groupId}"]`
+    );
+    const expandButton = document.querySelector(
+      `.bookmark-group-expand[data-group-id="${groupId}"]`
+    );
+
+    if (tabsContainer && expandButton) {
+      const isExpanded = tabsContainer.classList.contains("expanded");
+
+      if (isExpanded) {
+        tabsContainer.classList.remove("expanded");
+        expandButton.classList.remove("expanded");
+        expandButton.textContent = "▶";
+      } else {
+        tabsContainer.classList.add("expanded");
+        expandButton.classList.add("expanded");
+        expandButton.textContent = "▼";
+      }
+    }
+  }
+
+  async openSingleTab(url) {
+    try {
+      await chrome.tabs.create({ url });
+      this.showNotification("Tab opened successfully", "success");
+    } catch (error) {
+      console.error("Error opening tab:", error);
+      this.showNotification("Failed to open tab", "error");
+    }
   }
 
   setupTabbyEventListeners() {
@@ -1062,13 +1368,25 @@ class TodoApp {
   // Weather and Prayer Time Methods
   async initTimeAndWeather() {
     try {
-      // Get user's location
-      const location = await this.getCurrentLocation();
+      // Use Malaysia location specifically
+      const location = {
+        latitude: 3.139, // Kuala Lumpur coordinates
+        longitude: 101.6869,
+        city: "Kuala Lumpur",
+        country: "Malaysia",
+      };
 
-      // Load weather data
+      // Initialize Malaysia time display
+      this.updateMalaysiaTime();
+      setInterval(() => this.updateMalaysiaTime(), 1000);
+
+      // Initialize weather slide navigation
+      this.initializeWeatherSlides();
+
+      // Load weather data for Malaysia
       await this.loadWeatherData(location);
 
-      // Load prayer times
+      // Load prayer times for Malaysia
       await this.loadPrayerTimes(location);
     } catch (error) {
       console.error("Error initializing time and weather:", error);
@@ -1076,29 +1394,98 @@ class TodoApp {
     }
   }
 
-  getCurrentLocation() {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported by this browser"));
-        return;
-      }
+  updateMalaysiaTime() {
+    const now = new Date();
+    const malaysiaTime = new Date(
+      now.toLocaleString("en-US", { timeZone: "Asia/Kuala_Lumpur" })
+    );
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => {
-          // Fallback to IP-based location or default location
-          console.warn("Geolocation error:", error);
-          resolve({
-            latitude: 23.8103, // Default to Dhaka, Bangladesh
-            longitude: 90.4125,
-          });
-        }
-      );
+    const timeString = malaysiaTime.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
+
+    const dateString = malaysiaTime.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const timeElement = document.getElementById("malaysiaTime");
+    if (timeElement) {
+      timeElement.innerHTML = `${timeString}<br><small>${dateString}</small>`;
+    }
+  }
+
+  initializeWeatherSlides() {
+    this.currentSlide = 0;
+    this.totalSlides = 2;
+
+    const prevBtn = document.getElementById("weather-prev");
+    const nextBtn = document.getElementById("weather-next");
+    const indicators = document.querySelectorAll(".weather-indicator");
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", () => this.changeSlide(-1));
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener("click", () => this.changeSlide(1));
+    }
+
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener("click", () => this.goToSlide(index));
+    });
+
+    // Auto-slide every 5 seconds
+    setInterval(() => {
+      this.changeSlide(1);
+    }, 5000);
+  }
+
+  changeSlide(direction) {
+    const slides = document.querySelectorAll(".weather-slide");
+    const indicators = document.querySelectorAll(".weather-indicator");
+
+    // Update current slide index
+    this.currentSlide += direction;
+    if (this.currentSlide >= this.totalSlides) this.currentSlide = 0;
+    if (this.currentSlide < 0) this.currentSlide = this.totalSlides - 1;
+
+    // Update slide positions
+    slides.forEach((slide, index) => {
+      slide.classList.remove("active", "prev", "next");
+      if (index === this.currentSlide) {
+        slide.classList.add("active");
+      } else if (index < this.currentSlide) {
+        slide.classList.add("prev");
+      } else {
+        slide.classList.add("next");
+      }
+    });
+
+    // Update indicators
+    indicators.forEach((indicator, index) => {
+      indicator.classList.toggle("active", index === this.currentSlide);
+    });
+  }
+
+  goToSlide(slideIndex) {
+    const direction = slideIndex > this.currentSlide ? 1 : -1;
+    this.currentSlide = slideIndex;
+    this.changeSlide(0); // Update display without changing currentSlide
+  }
+
+  getCurrentLocation() {
+    // Always return Malaysia location
+    return Promise.resolve({
+      latitude: 3.139,
+      longitude: 101.6869,
+      city: "Kuala Lumpur",
+      country: "Malaysia",
     });
   }
 
@@ -1135,23 +1522,103 @@ class TodoApp {
   }
 
   displayMockWeatherData() {
-    // Mock weather data for demonstration
-    document.getElementById("temperature").textContent = "28°C";
-    document.getElementById("weatherLocation").textContent =
-      "Dhaka, Bangladesh";
-    document.getElementById("uvIndex").textContent = "7";
-    document.getElementById("uvLevel").textContent = "High";
+    // Mock weather data for Malaysia
+    const weatherTemp = document.getElementById("weatherTemp");
+    const weatherDesc = document.getElementById("weatherDesc");
+    const weatherFeelsLike = document.getElementById("weatherFeelsLike");
+    const weatherHumidity = document.getElementById("weatherHumidity");
+    const weatherWind = document.getElementById("weatherWind");
+    const weatherPressure = document.getElementById("weatherPressure");
+    const uvIndex = document.getElementById("uvIndex");
+    const uvLevel = document.getElementById("uvLevel");
+    const uvRisk = document.getElementById("uvRisk");
+    const uvProtection = document.getElementById("uvProtection");
+
+    if (weatherTemp) weatherTemp.textContent = "32°C";
+    if (weatherDesc) weatherDesc.textContent = "Partly Cloudy";
+    if (weatherFeelsLike) weatherFeelsLike.textContent = "Feels like 36°C";
+    if (weatherHumidity) weatherHumidity.textContent = "85%";
+    if (weatherWind) weatherWind.textContent = "12 km/h";
+    if (weatherPressure) weatherPressure.textContent = "1013 hPa";
+    if (uvIndex) uvIndex.textContent = "9";
+    if (uvLevel) uvLevel.textContent = "Very High";
+    if (uvRisk) uvRisk.textContent = "High";
+    if (uvProtection) uvProtection.textContent = "SPF 30+";
+
+    // Apply UV color coding
+    const uvLevelEl = document.getElementById("uvLevel");
+    if (uvLevelEl) {
+      uvLevelEl.className = "weather-feels-like uv-level-very-high";
+    }
   }
 
   displayWeatherData(weatherData, uvData) {
     const temperature = Math.round(weatherData.main.temp);
-    const location = `${weatherData.name}, ${weatherData.sys.country}`;
+    const feelsLike = Math.round(weatherData.main.feels_like);
+    const humidity = weatherData.main.humidity;
+    const windSpeed = Math.round(weatherData.wind.speed * 3.6); // Convert m/s to km/h
+    const pressure = weatherData.main.pressure;
+    const description = weatherData.weather[0].description;
     const uvIndex = Math.round(uvData.value);
+    const uvLevelText = this.getUVLevel(uvIndex);
 
-    document.getElementById("temperature").textContent = `${temperature}°C`;
-    document.getElementById("weatherLocation").textContent = location;
-    document.getElementById("uvIndex").textContent = uvIndex;
-    document.getElementById("uvLevel").textContent = this.getUVLevel(uvIndex);
+    // Update weather slide
+    const weatherTemp = document.getElementById("weatherTemp");
+    const weatherDesc = document.getElementById("weatherDesc");
+    const weatherFeelsLike = document.getElementById("weatherFeelsLike");
+    const weatherHumidity = document.getElementById("weatherHumidity");
+    const weatherWind = document.getElementById("weatherWind");
+    const weatherPressure = document.getElementById("weatherPressure");
+
+    if (weatherTemp) weatherTemp.textContent = `${temperature}°C`;
+    if (weatherDesc)
+      weatherDesc.textContent =
+        description.charAt(0).toUpperCase() + description.slice(1);
+    if (weatherFeelsLike)
+      weatherFeelsLike.textContent = `Feels like ${feelsLike}°C`;
+    if (weatherHumidity) weatherHumidity.textContent = `${humidity}%`;
+    if (weatherWind) weatherWind.textContent = `${windSpeed} km/h`;
+    if (weatherPressure) weatherPressure.textContent = `${pressure} hPa`;
+
+    // Update UV slide
+    const uvIndexEl = document.getElementById("uvIndex");
+    const uvLevelEl = document.getElementById("uvLevel");
+    const uvRisk = document.getElementById("uvRisk");
+    const uvProtection = document.getElementById("uvProtection");
+
+    if (uvIndexEl) uvIndexEl.textContent = uvIndex;
+    if (uvLevelEl) {
+      uvLevelEl.textContent = uvLevelText;
+      uvLevelEl.className = `weather-feels-like ${this.getUVColorClass(
+        uvIndex
+      )}`;
+    }
+    if (uvRisk) uvRisk.textContent = this.getUVRisk(uvIndex);
+    if (uvProtection) uvProtection.textContent = this.getUVProtection(uvIndex);
+  }
+
+  getUVColorClass(uvIndex) {
+    if (uvIndex <= 2) return "uv-level-low";
+    if (uvIndex <= 5) return "uv-level-moderate";
+    if (uvIndex <= 7) return "uv-level-high";
+    if (uvIndex <= 10) return "uv-level-very-high";
+    return "uv-level-extreme";
+  }
+
+  getUVRisk(uvIndex) {
+    if (uvIndex <= 2) return "Low";
+    if (uvIndex <= 5) return "Moderate";
+    if (uvIndex <= 7) return "High";
+    if (uvIndex <= 10) return "Very High";
+    return "Extreme";
+  }
+
+  getUVProtection(uvIndex) {
+    if (uvIndex <= 2) return "None needed";
+    if (uvIndex <= 5) return "SPF 15+";
+    if (uvIndex <= 7) return "SPF 30+";
+    if (uvIndex <= 10) return "SPF 50+";
+    return "Stay indoors";
   }
 
   getUVLevel(uvIndex) {
@@ -1202,26 +1669,123 @@ class TodoApp {
   displayPrayerTimes(timings) {
     const prayerTimes = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
     const currentTime = new Date();
+    const currentPrayer = this.getCurrentPrayer(timings, currentTime);
 
-    prayerTimes.forEach((prayer) => {
-      const prayerElement = document.getElementById(
-        `${prayer.toLowerCase()}-time`
-      );
-      if (prayerElement) {
-        const timeValue = prayerElement.querySelector(".prayer-time-value");
-        if (timeValue) {
-          const time24 = timings[prayer];
-          const time12 = this.convertTo12Hour(time24);
-          timeValue.textContent = time12;
-          timeValue.classList.remove("loading");
+    // Clear existing prayer times
+    const prayerTimesContainer = document.querySelector(".prayer-times");
+    if (prayerTimesContainer) {
+      prayerTimesContainer.innerHTML = "";
+    }
 
-          // Highlight current prayer time
-          if (this.isCurrentPrayerTime(time24, currentTime)) {
-            prayerElement.classList.add("current");
-          }
-        }
+    if (currentPrayer) {
+      // Display only current prayer time
+      const prayerElement = document.createElement("div");
+      prayerElement.className = "prayer-time current";
+      prayerElement.id = `${currentPrayer.name.toLowerCase()}-time`;
+
+      const time12 = this.convertTo12Hour(currentPrayer.time);
+
+      prayerElement.innerHTML = `
+        <div class="prayer-name">${currentPrayer.name}</div>
+        <div class="prayer-time-value">${time12}</div>
+        <div class="prayer-status">${currentPrayer.status}</div>
+      `;
+
+      prayerTimesContainer.appendChild(prayerElement);
+    } else {
+      // Show message if no current prayer
+      prayerTimesContainer.innerHTML = `
+        <div class="prayer-time">
+          <div class="prayer-name">No Current Prayer</div>
+          <div class="prayer-time-value">--:--</div>
+          <div class="prayer-status">Next prayer time will be shown when available</div>
+        </div>
+      `;
+    }
+  }
+
+  getCurrentPrayer(timings, currentTime) {
+    const prayerTimes = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMinute;
+
+    let currentPrayer = null;
+    let nextPrayer = null;
+    let timeToNext = null;
+
+    for (let i = 0; i < prayerTimes.length; i++) {
+      const prayer = prayerTimes[i];
+      const prayerTime = timings[prayer];
+      const [hours, minutes] = prayerTime.split(":");
+      const prayerTotalMinutes = parseInt(hours) * 60 + parseInt(minutes);
+
+      if (prayerTotalMinutes > currentTotalMinutes) {
+        nextPrayer = {
+          name: prayer,
+          time: prayerTime,
+          status: `Next prayer in ${this.getTimeUntil(
+            prayerTotalMinutes - currentTotalMinutes
+          )}`,
+        };
+        break;
       }
-    });
+    }
+
+    // If no next prayer found today, next is tomorrow's Fajr
+    if (!nextPrayer) {
+      const tomorrowFajr = timings.Fajr;
+      const [hours, minutes] = tomorrowFajr.split(":");
+      const fajrTotalMinutes = parseInt(hours) * 60 + parseInt(minutes);
+      const minutesUntilTomorrow =
+        24 * 60 - currentTotalMinutes + fajrTotalMinutes;
+
+      nextPrayer = {
+        name: "Fajr",
+        time: tomorrowFajr,
+        status: `Next prayer in ${this.getTimeUntil(
+          minutesUntilTomorrow
+        )} (tomorrow)`,
+      };
+    }
+
+    // Check if we're currently in a prayer time window (within 30 minutes)
+    for (let i = 0; i < prayerTimes.length; i++) {
+      const prayer = prayerTimes[i];
+      const prayerTime = timings[prayer];
+      const [hours, minutes] = prayerTime.split(":");
+      const prayerTotalMinutes = parseInt(hours) * 60 + parseInt(minutes);
+
+      const timeDiff = Math.abs(currentTotalMinutes - prayerTotalMinutes);
+      if (timeDiff <= 30) {
+        // Within 30 minutes
+        currentPrayer = {
+          name: prayer,
+          time: prayerTime,
+          status:
+            timeDiff === 0
+              ? "Now"
+              : `${timeDiff} minutes ${
+                  currentTotalMinutes > prayerTotalMinutes ? "since" : "until"
+                }`,
+        };
+        break;
+      }
+    }
+
+    // Return current prayer if active, otherwise next prayer
+    return currentPrayer || nextPrayer;
+  }
+
+  getTimeUntil(totalMinutes) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${minutes}m`;
+    }
   }
 
   convertTo12Hour(time24) {
