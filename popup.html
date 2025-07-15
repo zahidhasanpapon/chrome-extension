@@ -3,24 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chrome Extension</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Productivity Hub - Popup</title>
+    <link rel="stylesheet" href="modern.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
+    <button class="dark-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
     <div class="container">
-      <h2 id="chrome-extension-title">Chrome Extension</h2>
-      <div id="profile-section">
-        <label for="profile-select">Active Profile:</label>
-        <select
-          id="profile-select"
-          aria-labelledby="chrome-extension-title profile-select"
-        ></select>
-        <button id="activate-btn" aria-label="Activate selected profile">
-          Activate
-        </button>
-      </div>
-      <div id="profile-info" aria-live="polite"></div>
+      <section class="card">
+        <h2 id="chrome-extension-title" class="text-center">Productivity Hub</h2>
+        <form id="profile-section" class="flex gap-sm mb" aria-label="Active Profile" onsubmit="return false;">
+          <label for="profile-select" class="text-muted">Active Profile:</label>
+          <select id="profile-select" aria-labelledby="chrome-extension-title profile-select"></select>
+          <button id="activate-btn" type="button">Activate</button>
+        </form>
+        <div id="profile-info" aria-live="polite"></div>
+      </section>
     </div>
     <script src="popup.js"></script>
+    <script>
+      // Dark mode toggle logic
+      const toggleBtn = document.getElementById('darkModeToggle');
+      toggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+      });
+    </script>
   </body>
 </html>
