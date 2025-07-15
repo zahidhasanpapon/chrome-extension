@@ -3,886 +3,114 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Todo List - New Tab</title>
-    <link rel="stylesheet" href="style.css" />
-    <style>
-      body {
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        font-family: "Segoe UI", Arial, sans-serif;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20px;
-      }
-
-      .todo-container {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 800px;
-        width: 100%;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        min-height: 600px;
-      }
-
-      .todo-header {
-        text-align: center;
-        margin-bottom: 30px;
-      }
-
-      .todo-header h1 {
-        color: #333;
-        font-size: 2.5em;
-        margin: 0;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      .todo-header p {
-        color: #666;
-        font-size: 1.1em;
-        margin-top: 10px;
-      }
-
-      .todo-input-container {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 30px;
-      }
-
-      .todo-input {
-        flex: 1;
-        padding: 15px;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        font-size: 16px;
-        outline: none;
-        transition: border-color 0.3s;
-      }
-
-      .todo-input:focus {
-        border-color: #667eea;
-      }
-
-      .add-btn {
-        background: linear-gradient(45deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-        padding: 15px 25px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: transform 0.2s;
-      }
-
-      .add-btn:hover {
-        transform: translateY(-2px);
-      }
-
-      .todo-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      .todo-item {
-        background: #f8f9fa;
-        margin-bottom: 10px;
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 4px solid #667eea;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        transition: all 0.3s;
-        cursor: pointer;
-        border: 1px solid transparent;
-      }
-
-      .todo-item:hover {
-        background: #e9ecef;
-        transform: translateX(5px);
-        border-color: #667eea;
-      }
-
-      .todo-item.completed {
-        background: #d1ecf1;
-        border-left-color: #5cb85c;
-        opacity: 0.8;
-      }
-
-      .todo-item.completed .todo-text {
-        text-decoration: line-through;
-        color: #666;
-      }
-
-      .todo-checkbox {
-        width: 20px;
-        height: 20px;
-        border: 2px solid #667eea;
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-      }
-
-      .todo-checkbox.checked {
-        background: #5cb85c;
-        border-color: #5cb85c;
-      }
-
-      .todo-checkbox.checked::after {
-        content: "✓";
-        color: white;
-        font-size: 14px;
-        font-weight: bold;
-      }
-
-      .todo-text {
-        flex: 1;
-        font-size: 16px;
-        color: #333;
-      }
-
-      .todo-actions {
-        display: flex;
-        gap: 10px;
-      }
-
-      .edit-btn,
-      .delete-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 8px;
-        border-radius: 5px;
-        transition: background 0.2s;
-      }
-
-      .edit-btn {
-        color: #007bff;
-      }
-
-      .edit-btn:hover {
-        background: #e3f2fd;
-      }
-
-      .delete-btn {
-        color: #dc3545;
-      }
-
-      .delete-btn:hover {
-        background: #fce4ec;
-      }
-
-      .empty-state {
-        text-align: center;
-        color: #666;
-        font-size: 18px;
-        margin-top: 50px;
-      }
-
-      .stats {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #e0e0e0;
-      }
-
-      .stat-item {
-        text-align: center;
-      }
-
-      .stat-number {
-        font-size: 24px;
-        font-weight: bold;
-        color: #667eea;
-      }
-
-      .stat-label {
-        color: #666;
-        font-size: 14px;
-      }
-
-      .search-results {
-        text-align: center;
-        color: #666;
-        font-size: 16px;
-        margin-top: 20px;
-        margin-bottom: 20px;
-      }
-
-      /* Website Blocking Styles */
-      .section-tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 30px;
-        border-bottom: 2px solid #e0e0e0;
-      }
-
-      .tab-btn {
-        background: none;
-        border: none;
-        padding: 15px 25px;
-        cursor: pointer;
-        font-size: 16px;
-        color: #666;
-        border-bottom: 3px solid transparent;
-        transition: all 0.3s;
-      }
-
-      .tab-btn.active {
-        color: #667eea;
-        border-bottom-color: #667eea;
-      }
-
-      .tab-btn:hover {
-        color: #667eea;
-      }
-
-      .tab-content {
-        display: none;
-      }
-
-      .tab-content.active {
-        display: block;
-      }
-
-      .blocked-sites-container {
-        margin-bottom: 30px;
-      }
-
-      .blocked-sites-input {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-      }
-
-      .blocked-sites-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      .blocked-site-item {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: transform 0.2s;
-      }
-
-      .blocked-site-item:hover {
-        transform: translateX(5px);
-      }
-
-      .blocked-site-url {
-        font-family: monospace;
-        font-size: 14px;
-        color: #856404;
-        font-weight: bold;
-      }
-
-      .unblock-btn {
-        background: #dc3545;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.2s;
-      }
-
-      .unblock-btn:hover {
-        background: #c82333;
-      }
-
-      .blocked-sites-empty {
-        text-align: center;
-        color: #666;
-        font-size: 16px;
-        margin-top: 30px;
-      }
-
-      /* Weather and Prayer Time Styles */
-      .info-section {
-        margin-bottom: 25px;
-        padding: 20px;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 15px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-      }
-
-      .info-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
-      }
-
-      .info-card {
-        background: rgba(255, 255, 255, 0.8);
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-      }
-
-      .info-card h3 {
-        margin: 0 0 10px 0;
-        color: #667eea;
-        font-size: 16px;
-      }
-
-      .info-card .info-value {
-        font-size: 20px;
-        font-weight: bold;
-        color: #333;
-        margin: 5px 0;
-      }
-
-      .info-card .info-label {
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-      }
-
-      .prayer-times {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 10px;
-        margin-top: 15px;
-      }
-
-      .prayer-time {
-        background: rgba(102, 126, 234, 0.1);
-        padding: 10px;
-        border-radius: 8px;
-        text-align: center;
-        border: 1px solid rgba(102, 126, 234, 0.2);
-      }
-
-      .prayer-time .prayer-name {
-        font-size: 12px;
-        color: #667eea;
-        font-weight: bold;
-        margin-bottom: 5px;
-      }
-
-      .prayer-time .prayer-time-value {
-        font-size: 14px;
-        color: #333;
-        font-weight: bold;
-      }
-
-      .prayer-time.current {
-        background: rgba(102, 126, 234, 0.2);
-        border-color: #667eea;
-      }
-
-      .loading {
-        color: #666;
-        font-style: italic;
-      }
-
-      .error {
-        color: #dc3545;
-        font-size: 14px;
-      }
-
-      @media (max-width: 768px) {
-        .info-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .prayer-times {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-
-      /* Tabby Styles */
-      .tabby-container {
-        margin-bottom: 30px;
-      }
-
-      .tabby-controls {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-      }
-
-      .tabby-btn {
-        padding: 8px 12px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 12px;
-        transition: all 0.2s;
-        font-weight: 500;
-      }
-
-      .tabby-btn.primary {
-        background: #667eea;
-        color: white;
-      }
-
-      .tabby-btn.primary:hover {
-        background: #5a6fd8;
-      }
-
-      .tabby-btn.primary:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-      }
-
-      .tabby-btn.secondary {
-        background: #f0f4f8;
-        color: #667eea;
-        border: 1px solid #d1d5db;
-      }
-
-      .tabby-btn.secondary:hover {
-        background: #e2e8f0;
-      }
-
-      .group-name-input {
-        flex: 1;
-        padding: 8px 12px;
-        border: 2px solid #e0e0e0;
-        border-radius: 6px;
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.3s;
-      }
-
-      .group-name-input:focus {
-        border-color: #667eea;
-      }
-
-      .tabs-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 10px;
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
-        padding: 15px;
-        background: #f8f9fa;
-      }
-
-      .tab-item {
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-        user-select: none;
-      }
-
-      .tab-item:hover {
-        background: #f0f9ff;
-        border-color: #667eea;
-        transform: translateY(-1px);
-      }
-
-      .tab-item.selected {
-        background: #e0f2fe;
-        border-color: #667eea;
-      }
-
-      .tab-checkbox {
-        margin-right: 10px;
-        width: 16px;
-        height: 16px;
-        accent-color: #667eea;
-      }
-
-      .tab-favicon {
-        width: 20px;
-        height: 20px;
-        margin-right: 10px;
-        border-radius: 3px;
-        flex-shrink: 0;
-      }
-
-      .tab-info {
-        flex: 1;
-        overflow: hidden;
-      }
-
-      .tab-title {
-        font-size: 13px;
-        font-weight: 500;
-        color: #333;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-bottom: 2px;
-      }
-
-      .tab-url {
-        font-size: 11px;
-        color: #666;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .select-all-controls {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 15px;
-        padding: 10px;
-        background: #f0f9ff;
-        border-radius: 8px;
-        border: 1px solid #e0f2fe;
-      }
-
-      .select-all-checkbox {
-        width: 16px;
-        height: 16px;
-        accent-color: #667eea;
-      }
-
-      .selected-count {
-        font-size: 12px;
-        color: #667eea;
-        font-weight: 500;
-      }
-
-      .bookmark-groups {
-        margin-top: 20px;
-        max-height: 300px;
-        overflow-y: auto;
-      }
-
-      .bookmark-groups h4 {
-        margin: 0 0 10px 0;
-        color: #333;
-        font-size: 16px;
-      }
-
-      .bookmark-group {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        transition: all 0.2s;
-      }
-
-      .bookmark-group:hover {
-        background: #f8f9fa;
-        border-color: #667eea;
-      }
-
-      .bookmark-group-info {
-        flex: 1;
-      }
-
-      .bookmark-group-name {
-        font-size: 14px;
-        font-weight: 500;
-        color: #333;
-        margin-bottom: 2px;
-      }
-
-      .bookmark-group-count {
-        font-size: 12px;
-        color: #666;
-      }
-
-      .bookmark-group-actions {
-        display: flex;
-        gap: 5px;
-      }
-
-      .bookmark-group-btn {
-        padding: 6px 12px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 11px;
-        font-weight: 500;
-        transition: all 0.2s;
-      }
-
-      .bookmark-group-btn.open {
-        background: #10b981;
-        color: white;
-      }
-
-      .bookmark-group-btn.open:hover {
-        background: #059669;
-      }
-
-      .bookmark-group-btn.delete {
-        background: #ef4444;
-        color: white;
-      }
-
-      .bookmark-group-btn.delete:hover {
-        background: #dc2626;
-      }
-
-      .empty-tabs {
-        text-align: center;
-        color: #666;
-        font-size: 16px;
-        margin: 40px 0;
-      }
-
-      .empty-groups {
-        text-align: center;
-        color: #666;
-        font-size: 14px;
-        padding: 30px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
-      }
-    </style>
+    <title>Productivity Hub - New Tab</title>
+    <link rel="stylesheet" href="modern.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div class="todo-container">
-      <div class="todo-header">
+    <button class="dark-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+    <main class="main-content">
+      <header class="card text-center mb">
         <h1>⚡ Productivity Hub</h1>
-        <p>Stay productive and organized with your daily tasks and focus</p>
-      </div>
-
-      <!-- Weather and Prayer Time Info Section -->
-      <div class="info-section">
-        <div class="info-grid">
-          <div class="info-card">
-            <h3>📅 Current Time</h3>
-            <div id="currentTime" class="info-value loading">Loading...</div>
-            <div id="currentDate" class="info-label">--</div>
-          </div>
-
-          <div class="info-card">
-            <h3>🌤️ Weather</h3>
-            <div id="temperature" class="info-value loading">Loading...</div>
-            <div id="weatherLocation" class="info-label">--</div>
-          </div>
-
-          <div class="info-card">
-            <h3>☀️ UV Index</h3>
-            <div id="uvIndex" class="info-value loading">Loading...</div>
-            <div id="uvLevel" class="info-label">--</div>
-          </div>
-        </div>
-
-        <div class="prayer-times">
-          <div class="prayer-time" id="fajr-time">
-            <div class="prayer-name">Fajr</div>
-            <div class="prayer-time-value loading">Loading...</div>
-          </div>
-          <div class="prayer-time" id="sunrise-time">
-            <div class="prayer-name">Sunrise</div>
-            <div class="prayer-time-value loading">Loading...</div>
-          </div>
-          <div class="prayer-time" id="dhuhr-time">
-            <div class="prayer-name">Dhuhr</div>
-            <div class="prayer-time-value loading">Loading...</div>
-          </div>
-          <div class="prayer-time" id="asr-time">
-            <div class="prayer-name">Asr</div>
-            <div class="prayer-time-value loading">Loading...</div>
-          </div>
-          <div class="prayer-time" id="maghrib-time">
-            <div class="prayer-name">Maghrib</div>
-            <div class="prayer-time-value loading">Loading...</div>
-          </div>
-          <div class="prayer-time" id="isha-time">
-            <div class="prayer-name">Isha</div>
-            <div class="prayer-time-value loading">Loading...</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section-tabs">
-        <button class="tab-btn active" data-tab="todos">📝 Todos</button>
-        <button class="tab-btn" data-tab="blocked">🚫 Blocked Sites</button>
-        <button class="tab-btn" data-tab="tabby">📚 Tabby</button>
-      </div>
-
-      <div id="todos-tab" class="tab-content active">
-        <div class="todo-input-container">
-          <input
-            type="text"
-            id="todoInput"
-            class="todo-input"
-            placeholder="Add a new task..."
-            maxlength="200"
-          />
-          <button id="addBtn" class="add-btn">Add Task</button>
-        </div>
-
-        <div class="todo-input-container">
-          <input
-            type="text"
-            id="todoSearch"
-            class="todo-input"
-            placeholder="Search tasks..."
-          />
-        </div>
-
-        <ul id="todoList" class="todo-list"></ul>
-
-        <div id="emptyState" class="empty-state" style="display: none">
-          <p>🎉 No tasks yet! Add your first task above.</p>
-        </div>
-
-        <div id="searchResults" class="search-results" style="display: none;"></div>
-
-        <div class="stats">
-          <div class="stat-item">
-            <div id="totalTasks" class="stat-number">0</div>
-            <div class="stat-label">Total Tasks</div>
-          </div>
-          <div class="stat-item">
-            <div id="completedTasks" class="stat-number">0</div>
-            <div class="stat-label">Completed</div>
-          </div>
-          <div class="stat-item">
-            <div id="pendingTasks" class="stat-number">0</div>
-            <div class="stat-label">Pending</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="blocked-tab" class="tab-content">
-        <div class="blocked-sites-container">
-          <div class="blocked-sites-input">
-            <input
-              type="text"
-              id="blockedSiteInput"
-              class="todo-input"
-              placeholder="Enter website URL to block (e.g., facebook.com, youtube.com)"
-            />
-            <button id="blockBtn" class="add-btn">Block Site</button>
-          </div>
-
-          <ul id="blockedSitesList" class="blocked-sites-list"></ul>
-
-          <div
-            id="blockedSitesEmpty"
-            class="blocked-sites-empty"
-            style="display: none"
-          >
-            <p>🔓 No blocked sites yet! Add a website above to block it.</p>
-          </div>
-
-          <div
-            style="
-              margin-top: 20px;
-              padding-top: 20px;
-              border-top: 1px solid #e0e0e0;
-            "
-          >
-            <button
-              id="exportBtn"
-              style="
-                background: #28a745;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 14px;
-                margin-right: 10px;
-              "
-            >
-              📤 Export List
-            </button>
-            <button
-              id="importBtn"
-              style="
-                background: #007bff;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 14px;
-              "
-            >
-              📥 Import List
-            </button>
-          </div>
-
-          <div id="blockedSitesStats"></div>
-        </div>
-      </div>
-
-      <!-- Tabby Tab Content -->
-      <div id="tabby-tab" class="tab-content">
-        <div class="tabby-container">
-          <div class="tabby-controls">
-            <input
-              type="text"
-              id="group-name-input"
-              class="group-name-input"
-              placeholder="Enter group name..."
-              maxlength="50"
-            />
-            <button id="save-tabs-btn" class="tabby-btn primary" disabled>
-              Save Selected
-            </button>
-            <button id="refresh-tabs-btn" class="tabby-btn secondary">
-              Refresh Tabs
-            </button>
-          </div>
-
-          <div class="select-all-controls">
-            <label style="display: flex; align-items: center">
-              <input
-                type="checkbox"
-                id="select-all-checkbox"
-                class="select-all-checkbox"
-              />
-              <span style="margin-left: 5px">Select All</span>
-            </label>
-            <span id="selected-count" class="selected-count"
-              >0 tabs selected</span
-            >
-          </div>
-
-          <div id="tabs-grid" class="tabs-grid">
-            <div class="empty-tabs">Loading tabs...</div>
-          </div>
-
-          <div class="bookmark-groups">
-            <h4>💾 Saved Groups</h4>
-            <div id="bookmark-groups-list" class="empty-groups">
-              No saved groups yet. Create your first group above!
+        <p class="text-muted">Stay productive and organized with your daily tasks and focus</p>
+      </header>
+      <section class="card mb" aria-label="Weather and Prayer Info">
+        <div class="flex gap mb">
+          <div class="flex gap-sm" style="flex:1;">
+            <div class="stat" aria-label="Current Time">
+              <div id="currentTime" class="stat-number loading">--:--</div>
+              <div id="currentDate" class="stat-label">--</div>
+            </div>
+            <div class="stat" aria-label="Weather">
+              <div id="temperature" class="stat-number loading">--°</div>
+              <div id="weatherLocation" class="stat-label">--</div>
+            </div>
+            <div class="stat" aria-label="UV Index">
+              <div id="uvIndex" class="stat-number loading">--</div>
+              <div id="uvLevel" class="stat-label">--</div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-
+        <div class="flex gap-sm" id="prayerTimes" aria-label="Prayer Times">
+          <div class="stat" id="fajr-time"><div class="stat-label">Fajr</div><div class="stat-number loading">--</div></div>
+          <div class="stat" id="sunrise-time"><div class="stat-label">Sunrise</div><div class="stat-number loading">--</div></div>
+          <div class="stat" id="dhuhr-time"><div class="stat-label">Dhuhr</div><div class="stat-number loading">--</div></div>
+          <div class="stat" id="asr-time"><div class="stat-label">Asr</div><div class="stat-number loading">--</div></div>
+          <div class="stat" id="maghrib-time"><div class="stat-label">Maghrib</div><div class="stat-number loading">--</div></div>
+          <div class="stat" id="isha-time"><div class="stat-label">Isha</div><div class="stat-number loading">--</div></div>
+        </div>
+      </section>
+      <nav class="tabs" role="tablist" aria-label="Main Sections">
+        <button class="tab active" data-tab="todos" role="tab" aria-selected="true" aria-controls="todos-tab">📝 Todos</button>
+        <button class="tab" data-tab="blocked" role="tab" aria-selected="false" aria-controls="blocked-tab">🚫 Blocked Sites</button>
+        <button class="tab" data-tab="tabby" role="tab" aria-selected="false" aria-controls="tabby-tab">📚 Tabby</button>
+      </nav>
+      <section id="todos-tab" class="tab-content card" role="tabpanel" aria-labelledby="todos" style="display:block;">
+        <form class="flex gap-sm mb" onsubmit="return false;">
+          <input type="text" id="todoInput" placeholder="Add a new task..." maxlength="200" aria-label="Add a new task" />
+          <button id="addBtn" type="button">Add Task</button>
+        </form>
+        <input type="text" id="todoSearch" placeholder="Search tasks..." aria-label="Search tasks" />
+        <ul id="todoList" class="list mt" aria-live="polite"></ul>
+        <div id="emptyState" class="text-center text-muted mt" style="display:none;">🎉 No tasks yet! Add your first task above.</div>
+        <div id="searchResults" class="text-center text-muted mt" style="display:none;"></div>
+        <div class="stats mt">
+          <div class="stat"><div id="totalTasks" class="stat-number">0</div><div class="stat-label">Total Tasks</div></div>
+          <div class="stat"><div id="completedTasks" class="stat-number">0</div><div class="stat-label">Completed</div></div>
+          <div class="stat"><div id="pendingTasks" class="stat-number">0</div><div class="stat-label">Pending</div></div>
+        </div>
+      </section>
+      <section id="blocked-tab" class="tab-content card" role="tabpanel" aria-labelledby="blocked" style="display:none;">
+        <form class="flex gap-sm mb" onsubmit="return false;">
+          <input type="text" id="blockedSiteInput" placeholder="Enter website URL to block (e.g., facebook.com)" aria-label="Block website" />
+          <button id="blockBtn" type="button">Block Site</button>
+        </form>
+        <ul id="blockedSitesList" class="list mt" aria-live="polite"></ul>
+        <div id="blockedSitesEmpty" class="text-center text-muted mt" style="display:none;">🔓 No blocked sites yet! Add a website above to block it.</div>
+        <div class="flex gap-sm mt">
+          <button id="exportBtn" class="accent" type="button">📤 Export List</button>
+          <button id="importBtn" class="secondary" type="button">📥 Import List</button>
+        </div>
+        <div id="blockedSitesStats" class="mt"></div>
+      </section>
+      <section id="tabby-tab" class="tab-content card" role="tabpanel" aria-labelledby="tabby" style="display:none;">
+        <form class="flex gap-sm mb" onsubmit="return false;">
+          <input type="text" id="group-name-input" placeholder="Enter group name..." maxlength="50" aria-label="Group name" />
+          <button id="save-tabs-btn" class="accent" type="button" disabled>Save Selected</button>
+          <button id="refresh-tabs-btn" class="secondary" type="button">Refresh Tabs</button>
+        </form>
+        <div class="flex gap-sm mb">
+          <label class="flex flex-center gap-sm"><input type="checkbox" id="select-all-checkbox" /> Select All</label>
+          <span id="selected-count" class="text-muted">0 tabs selected</span>
+        </div>
+        <div id="tabs-grid" class="card-list mt"><div class="text-center text-muted">Loading tabs...</div></div>
+        <div class="card mt">
+          <h4>💾 Saved Groups</h4>
+          <div id="bookmark-groups-list" class="text-muted">No saved groups yet. Create your first group above!</div>
+        </div>
+      </section>
+    </main>
     <script src="newtab.js"></script>
+    <script>
+      // Dark mode toggle logic
+      const toggleBtn = document.getElementById('darkModeToggle');
+      toggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+      });
+      // Tab switching logic (for accessibility)
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', e => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(tc => tc.style.display = 'none');
+          tab.classList.add('active');
+          const tabName = tab.getAttribute('data-tab');
+          document.getElementById(`${tabName}-tab`).style.display = 'block';
+          document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', 'false'));
+          tab.setAttribute('aria-selected', 'true');
+        });
+      });
+    </script>
   </body>
 </html>
