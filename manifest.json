@@ -14,10 +14,14 @@
     "storage",
     "tabs",
     "declarativeNetRequest",
-    "notifications"
+    "notifications",
+    "geolocation",
+    "bookmarks"
   ],
   "host_permissions": [
-    "<all_urls>"
+    "<all_urls>",
+    "https://api.openweathermap.org/*",
+    "https://api.aladhan.com/*"
   ],
   "icons": {
     "128": "icons/icon.png"

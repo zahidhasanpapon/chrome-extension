@@ -15,16 +15,19 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        padding: 20px;
       }
 
       .todo-container {
         background: rgba(255, 255, 255, 0.95);
         border-radius: 20px;
         padding: 40px;
-        max-width: 600px;
-        width: 90%;
+        max-width: 800px;
+        width: 100%;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        min-height: 600px;
       }
 
       .todo-header {
@@ -33,17 +36,16 @@
       }
 
       .todo-header h1 {
-        margin: 0;
         color: #333;
         font-size: 2.5em;
-        font-weight: 300;
-        margin-bottom: 10px;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .todo-header p {
         color: #666;
         font-size: 1.1em;
-        margin: 0;
+        margin-top: 10px;
       }
 
       .todo-input-container {
@@ -67,13 +69,13 @@
       }
 
       .add-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(45deg, #667eea, #764ba2);
         color: white;
         border: none;
         padding: 15px 25px;
         border-radius: 10px;
-        font-size: 16px;
         cursor: pointer;
+        font-size: 16px;
         transition: transform 0.2s;
       }
 
@@ -88,24 +90,58 @@
       }
 
       .todo-item {
-        background: white;
-        border-radius: 10px;
+        background: #f8f9fa;
+        margin-bottom: 10px;
         padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        transition: transform 0.2s;
+        gap: 15px;
+        transition: all 0.3s;
+        cursor: pointer;
+        border: 1px solid transparent;
       }
 
       .todo-item:hover {
+        background: #e9ecef;
         transform: translateX(5px);
+        border-color: #667eea;
       }
 
       .todo-item.completed {
-        opacity: 0.6;
+        background: #d1ecf1;
+        border-left-color: #5cb85c;
+        opacity: 0.8;
+      }
+
+      .todo-item.completed .todo-text {
         text-decoration: line-through;
+        color: #666;
+      }
+
+      .todo-checkbox {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #667eea;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+      }
+
+      .todo-checkbox.checked {
+        background: #5cb85c;
+        border-color: #5cb85c;
+      }
+
+      .todo-checkbox.checked::after {
+        content: "✓";
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
       }
 
       .todo-text {
@@ -119,34 +155,30 @@
         gap: 10px;
       }
 
-      .complete-btn {
-        background: #4caf50;
-        color: white;
+      .edit-btn,
+      .delete-btn {
+        background: none;
         border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
         cursor: pointer;
-        font-size: 14px;
+        padding: 8px;
+        border-radius: 5px;
         transition: background 0.2s;
       }
 
-      .complete-btn:hover {
-        background: #45a049;
+      .edit-btn {
+        color: #007bff;
+      }
+
+      .edit-btn:hover {
+        background: #e3f2fd;
       }
 
       .delete-btn {
-        background: #f44336;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.2s;
+        color: #dc3545;
       }
 
       .delete-btn:hover {
-        background: #da190b;
+        background: #fce4ec;
       }
 
       .empty-state {
@@ -275,18 +307,416 @@
         font-size: 16px;
         margin-top: 30px;
       }
+
+      /* Weather and Prayer Time Styles */
+      .info-section {
+        margin-bottom: 25px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      .info-card {
+        background: rgba(255, 255, 255, 0.8);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+      }
+
+      .info-card h3 {
+        margin: 0 0 10px 0;
+        color: #667eea;
+        font-size: 16px;
+      }
+
+      .info-card .info-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        margin: 5px 0;
+      }
+
+      .info-card .info-label {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .prayer-times {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .prayer-time {
+        background: rgba(102, 126, 234, 0.1);
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+      }
+
+      .prayer-time .prayer-name {
+        font-size: 12px;
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .prayer-time .prayer-time-value {
+        font-size: 14px;
+        color: #333;
+        font-weight: bold;
+      }
+
+      .prayer-time.current {
+        background: rgba(102, 126, 234, 0.2);
+        border-color: #667eea;
+      }
+
+      .loading {
+        color: #666;
+        font-style: italic;
+      }
+
+      .error {
+        color: #dc3545;
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+        
+        .prayer-times {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      /* Tabby Styles */
+      .tabby-container {
+        margin-bottom: 30px;
+      }
+      
+      .tabby-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      
+      .tabby-btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+      
+      .tabby-btn.primary {
+        background: #667eea;
+        color: white;
+      }
+      
+      .tabby-btn.primary:hover {
+        background: #5a6fd8;
+      }
+      
+      .tabby-btn.primary:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+      
+      .tabby-btn.secondary {
+        background: #f0f4f8;
+        color: #667eea;
+        border: 1px solid #d1d5db;
+      }
+      
+      .tabby-btn.secondary:hover {
+        background: #e2e8f0;
+      }
+      
+      .group-name-input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.3s;
+      }
+      
+      .group-name-input:focus {
+        border-color: #667eea;
+      }
+      
+      .tabs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 15px;
+        background: #f8f9fa;
+      }
+      
+      .tab-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        user-select: none;
+      }
+      
+      .tab-item:hover {
+        background: #f0f9ff;
+        border-color: #667eea;
+        transform: translateY(-1px);
+      }
+      
+      .tab-item.selected {
+        background: #e0f2fe;
+        border-color: #667eea;
+      }
+      
+      .tab-checkbox {
+        margin-right: 10px;
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
+      }
+      
+      .tab-favicon {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+      
+      .tab-info {
+        flex: 1;
+        overflow: hidden;
+      }
+      
+      .tab-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 2px;
+      }
+      
+      .tab-url {
+        font-size: 11px;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .select-all-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+        padding: 10px;
+        background: #f0f9ff;
+        border-radius: 8px;
+        border: 1px solid #e0f2fe;
+      }
+      
+      .select-all-checkbox {
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
+      }
+      
+      .selected-count {
+        font-size: 12px;
+        color: #667eea;
+        font-weight: 500;
+      }
+      
+      .bookmark-groups {
+        margin-top: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .bookmark-groups h4 {
+        margin: 0 0 10px 0;
+        color: #333;
+        font-size: 16px;
+      }
+      
+      .bookmark-group {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+      }
+      
+      .bookmark-group:hover {
+        background: #f8f9fa;
+        border-color: #667eea;
+      }
+      
+      .bookmark-group-info {
+        flex: 1;
+      }
+      
+      .bookmark-group-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 2px;
+      }
+      
+      .bookmark-group-count {
+        font-size: 12px;
+        color: #666;
+      }
+      
+      .bookmark-group-actions {
+        display: flex;
+        gap: 5px;
+      }
+      
+      .bookmark-group-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      
+      .bookmark-group-btn.open {
+        background: #10b981;
+        color: white;
+      }
+      
+      .bookmark-group-btn.open:hover {
+        background: #059669;
+      }
+      
+      .bookmark-group-btn.delete {
+        background: #ef4444;
+        color: white;
+      }
+      
+      .bookmark-group-btn.delete:hover {
+        background: #dc2626;
+      }
+      
+      .empty-tabs {
+        text-align: center;
+        color: #666;
+        font-size: 16px;
+        margin: 40px 0;
+      }
+      
+      .empty-groups {
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+        padding: 30px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+      }
     </style>
   </head>
   <body>
     <div class="todo-container">
       <div class="todo-header">
-        <h1>� Productivity Hub</h1>
+        <h1>⚡ Productivity Hub</h1>
         <p>Stay productive and organized with your daily tasks and focus</p>
+      </div>
+
+      <!-- Weather and Prayer Time Info Section -->
+      <div class="info-section">
+        <div class="info-grid">
+          <div class="info-card">
+            <h3>📅 Current Time</h3>
+            <div id="currentTime" class="info-value loading">Loading...</div>
+            <div id="currentDate" class="info-label">--</div>
+          </div>
+          
+          <div class="info-card">
+            <h3>🌤️ Weather</h3>
+            <div id="temperature" class="info-value loading">Loading...</div>
+            <div id="weatherLocation" class="info-label">--</div>
+          </div>
+          
+          <div class="info-card">
+            <h3>☀️ UV Index</h3>
+            <div id="uvIndex" class="info-value loading">Loading...</div>
+            <div id="uvLevel" class="info-label">--</div>
+          </div>
+        </div>
+        
+        <div class="prayer-times">
+          <div class="prayer-time" id="fajr-time">
+            <div class="prayer-name">Fajr</div>
+            <div class="prayer-time-value loading">Loading...</div>
+          </div>
+          <div class="prayer-time" id="sunrise-time">
+            <div class="prayer-name">Sunrise</div>
+            <div class="prayer-time-value loading">Loading...</div>
+          </div>
+          <div class="prayer-time" id="dhuhr-time">
+            <div class="prayer-name">Dhuhr</div>
+            <div class="prayer-time-value loading">Loading...</div>
+          </div>
+          <div class="prayer-time" id="asr-time">
+            <div class="prayer-name">Asr</div>
+            <div class="prayer-time-value loading">Loading...</div>
+          </div>
+          <div class="prayer-time" id="maghrib-time">
+            <div class="prayer-name">Maghrib</div>
+            <div class="prayer-time-value loading">Loading...</div>
+          </div>
+          <div class="prayer-time" id="isha-time">
+            <div class="prayer-name">Isha</div>
+            <div class="prayer-time-value loading">Loading...</div>
+          </div>
+        </div>
       </div>
 
       <div class="section-tabs">
         <button class="tab-btn active" data-tab="todos">📝 Todos</button>
         <button class="tab-btn" data-tab="blocked">🚫 Blocked Sites</button>
+        <button class="tab-btn" data-tab="tabby">📚 Tabby</button>
       </div>
 
       <div id="todos-tab" class="tab-content active">
@@ -384,6 +814,42 @@
           </div>
 
           <div id="blockedSitesStats"></div>
+        </div>
+      </div>
+
+      <!-- Tabby Tab Content -->
+      <div id="tabby-tab" class="tab-content">
+        <div class="tabby-container">
+          <div class="tabby-controls">
+            <input 
+              type="text" 
+              id="group-name-input" 
+              class="group-name-input" 
+              placeholder="Enter group name..."
+              maxlength="50"
+            />
+            <button id="save-tabs-btn" class="tabby-btn primary" disabled>Save Selected</button>
+            <button id="refresh-tabs-btn" class="tabby-btn secondary">Refresh Tabs</button>
+          </div>
+          
+          <div class="select-all-controls">
+            <label style="display: flex; align-items: center;">
+              <input type="checkbox" id="select-all-checkbox" class="select-all-checkbox" />
+              <span style="margin-left: 5px;">Select All</span>
+            </label>
+            <span id="selected-count" class="selected-count">0 tabs selected</span>
+          </div>
+          
+          <div id="tabs-grid" class="tabs-grid">
+            <div class="empty-tabs">Loading tabs...</div>
+          </div>
+          
+          <div class="bookmark-groups">
+            <h4>💾 Saved Groups</h4>
+            <div id="bookmark-groups-list" class="empty-groups">
+              No saved groups yet. Create your first group above!
+            </div>
+          </div>
         </div>
       </div>
     </div>

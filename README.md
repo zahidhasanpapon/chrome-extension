@@ -1,6 +1,6 @@
 # Productivity Hub - Chrome Extension
 
-A modern Chrome extension that transforms your new tab page into a productivity hub with todo management and website blocking capabilities.
+A modern Chrome extension that transforms your new tab page into a productivity hub with todo management, website blocking, weather information, prayer times, and powerful bookmark grouping capabilities.
 
 ## 🚀 Features
 
@@ -18,6 +18,29 @@ A modern Chrome extension that transforms your new tab page into a productivity 
 - **Real-time Blocking**: Sites are blocked immediately across all browser tabs
 - **Beautiful Block Page**: Instead of errors, see a motivational block page with options
 - **Export/Import**: Share your blocked sites list or backup your settings
+
+### 🌤️ Weather & Time Information
+
+- **Real-time Clock**: Current time with seconds and full date display
+- **Weather Data**: Current temperature and location-based weather information
+- **UV Index**: Safety level indicators (Low, Moderate, High, Very High, Extreme)
+- **Automatic Location**: Uses geolocation with graceful fallbacks
+
+### 🕌 Islamic Prayer Times (Namaz)
+
+- **5 Daily Prayers**: Fajr, Dhuhr, Asr, Maghrib, Isha plus Sunrise
+- **Current Prayer Highlighting**: Shows which prayer time is active
+- **Location-based Calculation**: Uses GPS for accurate prayer times
+- **Multiple Calculation Methods**: ISNA, MWL, Karachi, and more
+
+### 📚 Tabby - Bookmark Groups
+
+- **Smart Tab Management**: View and select from all open tabs
+- **Bookmark Groups**: Save selected tabs as named groups
+- **One-Click Actions**: Save multiple tabs or open entire groups instantly
+- **Group Management**: View, open, and delete saved bookmark groups
+- **Persistent Storage**: Groups saved locally and persist across sessions
+- **Visual Interface**: Clean design with favicons, titles, and metadata
 
 ### 🎨 Modern Interface
 
@@ -74,6 +97,31 @@ A modern Chrome extension that transforms your new tab page into a productivity 
 2. Click "Block Site" to add it to your blocked list
 3. When you visit a blocked site, you'll see a block page instead
 4. Use the "🔓 Unblock" button to remove sites from your blocked list
+
+### Weather & Prayer Times
+
+1. Allow location access when prompted (or use default location)
+2. Weather information and prayer times load automatically
+3. Times update in real-time throughout the day
+4. Mock data is shown if APIs are unavailable
+
+### Tabby - Bookmark Groups
+
+1. **Creating Groups**:
+   - Click the extension icon to open popup
+   - Review current tabs and select desired ones
+   - Enter a descriptive group name
+   - Click "Save Selected" to create the group
+
+2. **Opening Groups**:
+   - Open the extension popup
+   - Find your group in the "Saved Groups" section
+   - Click "Open" to launch all tabs from the group
+
+3. **Managing Groups**:
+   - View all saved groups with metadata
+   - Delete groups with confirmation
+   - Groups are automatically sorted by creation date
 
 ### Export/Import
 
