@@ -4,6 +4,7 @@ class TodoApp {
   constructor() {
     this.todos = [];
     this.blockedSites = [];
+    this.searchTerm = "";
     this.init();
   }
 
@@ -109,6 +110,7 @@ class TodoApp {
   setupEventListeners() {
     const todoInput = document.getElementById("todoInput");
     const addBtn = document.getElementById("addBtn");
+    const todoSearch = document.getElementById("todoSearch");
     const blockedSiteInput = document.getElementById("blockedSiteInput");
     const blockBtn = document.getElementById("blockBtn");
     const exportBtn = document.getElementById("exportBtn");
@@ -120,6 +122,11 @@ class TodoApp {
       if (e.key === "Enter") {
         this.addTodo();
       }
+    });
+
+    todoSearch.addEventListener("input", (e) => {
+      this.searchTerm = e.target.value;
+      this.render();
     });
 
     // Blocked sites event listeners
@@ -495,18 +502,35 @@ class TodoApp {
   render() {
     const todoList = document.getElementById("todoList");
     const emptyState = document.getElementById("emptyState");
+    const searchResults = document.getElementById("searchResults");
 
     // Clear existing items
     todoList.innerHTML = "";
 
-    if (this.todos.length === 0) {
+    const filteredTodos = this.todos.filter((todo) =>
+      todo.text.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
+
+    if (this.searchTerm) {
+      searchResults.textContent = `${filteredTodos.length} result(s) found.`;
+      searchResults.style.display = "block";
+    } else {
+      searchResults.style.display = "none";
+    }
+
+    if (filteredTodos.length === 0) {
       emptyState.style.display = "block";
       todoList.style.display = "none";
+      if (this.todos.length > 0) {
+        emptyState.innerHTML = "<p>🤷 No tasks match your search.</p>";
+      } else {
+        emptyState.innerHTML = "<p>🎉 No tasks yet! Add your first task above.</p>";
+      }
     } else {
       emptyState.style.display = "none";
       todoList.style.display = "block";
 
-      this.todos.forEach((todo) => {
+      filteredTodos.forEach((todo) => {
         const li = document.createElement("li");
         li.className = `todo-item ${todo.completed ? "completed" : ""}`;
         li.innerHTML = `
