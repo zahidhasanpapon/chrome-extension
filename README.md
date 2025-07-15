@@ -108,12 +108,14 @@ A modern Chrome extension that transforms your new tab page into a productivity 
 ### Tabby - Bookmark Groups
 
 1. **Creating Groups**:
+
    - Click the extension icon to open popup
    - Review current tabs and select desired ones
    - Enter a descriptive group name
    - Click "Save Selected" to create the group
 
 2. **Opening Groups**:
+
    - Open the extension popup
    - Find your group in the "Saved Groups" section
    - Click "Open" to launch all tabs from the group

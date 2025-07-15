@@ -13,11 +13,11 @@ class TodoApp {
     this.setupEventListeners();
     this.render();
     this.renderBlockedSites();
-    
+
     // Initialize weather and prayer time features
     this.initTimeAndWeather();
     this.startTimeUpdater();
-    
+
     // Initialize Tabby feature
     this.initTabby();
   }
@@ -28,7 +28,10 @@ class TodoApp {
       this.todos = result.todos || [];
     } catch (error) {
       console.error("Error loading todos:", error);
-      this.showNotification("Failed to load todos. Please refresh the page.", "error");
+      this.showNotification(
+        "Failed to load todos. Please refresh the page.",
+        "error"
+      );
       this.todos = [];
     }
   }
@@ -39,7 +42,10 @@ class TodoApp {
       this.blockedSites = result.blockedSites || [];
     } catch (error) {
       console.error("Error loading blocked sites:", error);
-      this.showNotification("Failed to load blocked sites. Please refresh the page.", "error");
+      this.showNotification(
+        "Failed to load blocked sites. Please refresh the page.",
+        "error"
+      );
       this.blockedSites = [];
     }
   }
@@ -151,12 +157,17 @@ class TodoApp {
     }
 
     if (text.length > 200) {
-      this.showNotification("Task description is too long (max 200 characters)", "error");
+      this.showNotification(
+        "Task description is too long (max 200 characters)",
+        "error"
+      );
       return;
     }
 
     // Check for duplicate todos
-    if (this.todos.some(todo => todo.text.toLowerCase() === text.toLowerCase())) {
+    if (
+      this.todos.some((todo) => todo.text.toLowerCase() === text.toLowerCase())
+    ) {
       this.showNotification("This task already exists", "error");
       return;
     }
@@ -184,7 +195,7 @@ class TodoApp {
       todo.completedAt = todo.completed ? new Date().toISOString() : null;
       this.saveTodos();
       this.render();
-      
+
       const action = todo.completed ? "completed" : "uncompleted";
       this.showNotification(`Task ${action}!`, "success");
     }
@@ -229,13 +240,19 @@ class TodoApp {
 
     // Validate URL format
     if (!this.isValidUrl(cleanUrl)) {
-      this.showNotification("Please enter a valid website URL (e.g., facebook.com)", "error");
+      this.showNotification(
+        "Please enter a valid website URL (e.g., facebook.com)",
+        "error"
+      );
       return;
     }
 
     // Check for localhost or IP addresses
     if (this.isLocalOrPrivateUrl(cleanUrl)) {
-      this.showNotification("Cannot block localhost or private IP addresses", "error");
+      this.showNotification(
+        "Cannot block localhost or private IP addresses",
+        "error"
+      );
       return;
     }
 
@@ -257,23 +274,24 @@ class TodoApp {
 
   isValidUrl(url) {
     // Basic URL validation - should contain at least one dot and valid characters
-    const urlPattern = /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
-    return urlPattern.test(url) && url.includes('.');
+    const urlPattern =
+      /^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/;
+    return urlPattern.test(url) && url.includes(".");
   }
 
   isLocalOrPrivateUrl(url) {
     const localPatterns = [
-      'localhost',
-      '127.0.0.1',
-      '0.0.0.0',
-      '::1',
+      "localhost",
+      "127.0.0.1",
+      "0.0.0.0",
+      "::1",
       /^192\.168\./,
       /^10\./,
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
     ];
-    
-    return localPatterns.some(pattern => {
-      if (typeof pattern === 'string') {
+
+    return localPatterns.some((pattern) => {
+      if (typeof pattern === "string") {
         return url.includes(pattern);
       } else {
         return pattern.test(url);
@@ -357,19 +375,25 @@ class TodoApp {
       const exportData = {
         blockedSites: this.blockedSites,
         exportDate: new Date().toISOString(),
-        version: "1.0"
+        version: "1.0",
       };
 
       const dataStr = JSON.stringify(exportData, null, 2);
-      const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-      const exportFileDefaultName = `blocked-sites-${new Date().toISOString().split('T')[0]}.json`;
+      const dataUri =
+        "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+      const exportFileDefaultName = `blocked-sites-${
+        new Date().toISOString().split("T")[0]
+      }.json`;
 
       const linkElement = document.createElement("a");
       linkElement.setAttribute("href", dataUri);
       linkElement.setAttribute("download", exportFileDefaultName);
       linkElement.click();
 
-      this.showNotification(`Exported ${this.blockedSites.length} blocked sites`, "success");
+      this.showNotification(
+        `Exported ${this.blockedSites.length} blocked sites`,
+        "success"
+      );
     } catch (error) {
       console.error("Export error:", error);
       this.showNotification("Failed to export blocked sites", "error");
@@ -402,46 +426,60 @@ class TodoApp {
           } else if (data.blockedSites && Array.isArray(data.blockedSites)) {
             importedSites = data.blockedSites;
           } else {
-            this.showNotification("Invalid file format. Expected array of URLs or proper export format.", "error");
+            this.showNotification(
+              "Invalid file format. Expected array of URLs or proper export format.",
+              "error"
+            );
             return;
           }
 
           // Validate imported sites
-          const validSites = importedSites.filter(site => {
-            if (typeof site !== 'string') return false;
+          const validSites = importedSites.filter((site) => {
+            if (typeof site !== "string") return false;
             const cleanedSite = this.cleanUrl(site);
-            return this.isValidUrl(cleanedSite) && !this.isLocalOrPrivateUrl(cleanedSite);
+            return (
+              this.isValidUrl(cleanedSite) &&
+              !this.isLocalOrPrivateUrl(cleanedSite)
+            );
           });
 
           if (validSites.length === 0) {
-            this.showNotification("No valid sites found in the imported file", "error");
+            this.showNotification(
+              "No valid sites found in the imported file",
+              "error"
+            );
             return;
           }
 
           // Merge with existing sites, avoiding duplicates
           const newSites = validSites
-            .map(site => this.cleanUrl(site))
-            .filter(site => !this.blockedSites.includes(site));
+            .map((site) => this.cleanUrl(site))
+            .filter((site) => !this.blockedSites.includes(site));
 
           if (newSites.length === 0) {
-            this.showNotification("All sites from the file are already blocked", "info");
+            this.showNotification(
+              "All sites from the file are already blocked",
+              "info"
+            );
             return;
           }
 
           this.blockedSites = [...this.blockedSites, ...newSites];
           this.saveBlockedSites();
           this.renderBlockedSites();
-          
+
           const skippedCount = validSites.length - newSites.length;
           let message = `Successfully imported ${newSites.length} new blocked sites!`;
           if (skippedCount > 0) {
             message += ` (${skippedCount} duplicates skipped)`;
           }
           this.showNotification(message, "success");
-
         } catch (error) {
           console.error("Import error:", error);
-          this.showNotification("Error reading file. Please make sure it's a valid JSON file.", "error");
+          this.showNotification(
+            "Error reading file. Please make sure it's a valid JSON file.",
+            "error"
+          );
         }
       };
 
@@ -566,7 +604,13 @@ class TodoApp {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: ${type === "error" ? "#f44336" : type === "success" ? "#4caf50" : "#2196f3"};
+      background: ${
+        type === "error"
+          ? "#f44336"
+          : type === "success"
+          ? "#4caf50"
+          : "#2196f3"
+      };
       color: white;
       padding: 15px 20px;
       border-radius: 10px;
@@ -629,7 +673,7 @@ class TodoApp {
     this.currentTabs = [];
     this.selectedTabs = new Set();
     this.bookmarkGroups = [];
-    
+
     this.loadBookmarkGroups();
     this.setupTabbyEventListeners();
   }
@@ -637,58 +681,64 @@ class TodoApp {
   async loadCurrentTabs() {
     try {
       const tabs = await chrome.tabs.query({ currentWindow: true });
-      this.currentTabs = tabs.filter(tab => 
-        !tab.url.startsWith('chrome://') && 
-        !tab.url.startsWith('chrome-extension://') &&
-        !tab.url.startsWith('moz-extension://')
+      this.currentTabs = tabs.filter(
+        (tab) =>
+          !tab.url.startsWith("chrome://") &&
+          !tab.url.startsWith("chrome-extension://") &&
+          !tab.url.startsWith("moz-extension://")
       );
       this.renderTabs();
     } catch (error) {
-      console.error('Error loading tabs:', error);
-      this.showTabbyError('Failed to load tabs');
+      console.error("Error loading tabs:", error);
+      this.showTabbyError("Failed to load tabs");
     }
   }
 
   renderTabs() {
-    const tabsGrid = document.getElementById('tabs-grid');
+    const tabsGrid = document.getElementById("tabs-grid");
     if (!tabsGrid) return;
 
-    tabsGrid.innerHTML = '';
+    tabsGrid.innerHTML = "";
 
     if (this.currentTabs.length === 0) {
       tabsGrid.innerHTML = '<div class="empty-tabs">No tabs available</div>';
       return;
     }
 
-    this.currentTabs.forEach(tab => {
-      const tabItem = document.createElement('div');
-      tabItem.className = 'tab-item';
+    this.currentTabs.forEach((tab) => {
+      const tabItem = document.createElement("div");
+      tabItem.className = "tab-item";
       if (this.selectedTabs.has(tab.id)) {
-        tabItem.classList.add('selected');
+        tabItem.classList.add("selected");
       }
-      
+
       tabItem.innerHTML = `
         <input 
           type="checkbox" 
           class="tab-checkbox" 
           data-tab-id="${tab.id}"
-          ${this.selectedTabs.has(tab.id) ? 'checked' : ''}
+          ${this.selectedTabs.has(tab.id) ? "checked" : ""}
         />
         <img 
-          src="${tab.favIconUrl || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDE1TDE2IDlINEwxMCAxNVoiIGZpbGw9IiM5OTkiLz4KPC9zdmc+'}" 
+          src="${
+            tab.favIconUrl ||
+            "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDE1TDE2IDlINEwxMCAxNVoiIGZpbGw9IiM5OTkiLz4KPC9zdmc+"
+          }" 
           class="tab-favicon" 
           alt="Tab icon"
           onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDE1TDE2IDlINEwxMCAxNVoiIGZpbGw9IiM5OTkiLz4KPC9zdmc+'"
         />
         <div class="tab-info">
           <div class="tab-title">${this.escapeHtml(tab.title)}</div>
-          <div class="tab-url">${this.escapeHtml(new URL(tab.url).hostname)}</div>
+          <div class="tab-url">${this.escapeHtml(
+            new URL(tab.url).hostname
+          )}</div>
         </div>
       `;
 
-      tabItem.addEventListener('click', (e) => {
-        if (e.target.type !== 'checkbox') {
-          const checkbox = tabItem.querySelector('.tab-checkbox');
+      tabItem.addEventListener("click", (e) => {
+        if (e.target.type !== "checkbox") {
+          const checkbox = tabItem.querySelector(".tab-checkbox");
           checkbox.checked = !checkbox.checked;
           this.toggleTabSelection(tab.id, checkbox.checked);
         }
@@ -706,84 +756,94 @@ class TodoApp {
     } else {
       this.selectedTabs.delete(tabId);
     }
-    
+
     // Update UI
-    const tabItem = document.querySelector(`[data-tab-id="${tabId}"]`).closest('.tab-item');
+    const tabItem = document
+      .querySelector(`[data-tab-id="${tabId}"]`)
+      .closest(".tab-item");
     if (tabItem) {
       if (isSelected) {
-        tabItem.classList.add('selected');
+        tabItem.classList.add("selected");
       } else {
-        tabItem.classList.remove('selected');
+        tabItem.classList.remove("selected");
       }
     }
-    
+
     this.updateSelectedCount();
     this.updateSelectAllCheckbox();
     this.updateSaveButton();
   }
 
   updateSelectedCount() {
-    const selectedCount = document.getElementById('selected-count');
+    const selectedCount = document.getElementById("selected-count");
     if (selectedCount) {
       selectedCount.textContent = `${this.selectedTabs.size} tabs selected`;
     }
   }
 
   updateSelectAllCheckbox() {
-    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    const selectAllCheckbox = document.getElementById("select-all-checkbox");
     if (selectAllCheckbox) {
       const totalTabs = this.currentTabs.length;
       const selectedCount = this.selectedTabs.size;
-      
+
       selectAllCheckbox.checked = selectedCount === totalTabs && totalTabs > 0;
-      selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < totalTabs;
+      selectAllCheckbox.indeterminate =
+        selectedCount > 0 && selectedCount < totalTabs;
     }
   }
 
   updateSaveButton() {
-    const saveBtn = document.getElementById('save-tabs-btn');
-    const groupInput = document.getElementById('group-name-input');
-    
+    const saveBtn = document.getElementById("save-tabs-btn");
+    const groupInput = document.getElementById("group-name-input");
+
     if (saveBtn && groupInput) {
       const hasSelection = this.selectedTabs.size > 0;
       const hasName = groupInput.value.trim().length > 0;
-      
+
       saveBtn.disabled = !hasSelection || !hasName;
     }
   }
 
   async loadBookmarkGroups() {
     try {
-      const result = await chrome.storage.local.get(['bookmarkGroups']);
+      const result = await chrome.storage.local.get(["bookmarkGroups"]);
       this.bookmarkGroups = result.bookmarkGroups || [];
       this.renderBookmarkGroups();
     } catch (error) {
-      console.error('Error loading bookmark groups:', error);
+      console.error("Error loading bookmark groups:", error);
     }
   }
 
   renderBookmarkGroups() {
-    const groupsList = document.getElementById('bookmark-groups-list');
+    const groupsList = document.getElementById("bookmark-groups-list");
     if (!groupsList) return;
 
-    groupsList.innerHTML = '';
+    groupsList.innerHTML = "";
 
     if (this.bookmarkGroups.length === 0) {
-      groupsList.innerHTML = '<div class="empty-groups">No saved groups yet. Create your first group above!</div>';
+      groupsList.innerHTML =
+        '<div class="empty-groups">No saved groups yet. Create your first group above!</div>';
       return;
     }
 
-    this.bookmarkGroups.forEach(group => {
-      const groupItem = document.createElement('div');
-      groupItem.className = 'bookmark-group';
+    this.bookmarkGroups.forEach((group) => {
+      const groupItem = document.createElement("div");
+      groupItem.className = "bookmark-group";
       groupItem.innerHTML = `
         <div class="bookmark-group-info">
           <div class="bookmark-group-name">${this.escapeHtml(group.name)}</div>
-          <div class="bookmark-group-count">${group.tabs.length} tabs • ${new Date(group.created).toLocaleDateString()}</div>
+          <div class="bookmark-group-count">${
+            group.tabs.length
+          } tabs • ${new Date(group.created).toLocaleDateString()}</div>
         </div>
         <div class="bookmark-group-actions">
-          <button class="bookmark-group-btn open" data-group-id="${group.id}">Open All</button>
-          <button class="bookmark-group-btn delete" data-group-id="${group.id}">Delete</button>
+          <button class="bookmark-group-btn open" data-group-id="${
+            group.id
+          }">Open All</button>
+          <button class="bookmark-group-btn delete" data-group-id="${
+            group.id
+          }">Delete</button>
         </div>
       `;
 
@@ -793,11 +853,11 @@ class TodoApp {
 
   setupTabbyEventListeners() {
     // Select all checkbox
-    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    const selectAllCheckbox = document.getElementById("select-all-checkbox");
     if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener('change', (e) => {
+      selectAllCheckbox.addEventListener("change", (e) => {
         const isChecked = e.target.checked;
-        this.currentTabs.forEach(tab => {
+        this.currentTabs.forEach((tab) => {
           if (isChecked) {
             this.selectedTabs.add(tab.id);
           } else {
@@ -809,50 +869,50 @@ class TodoApp {
     }
 
     // Tab checkboxes
-    document.addEventListener('change', (e) => {
-      if (e.target.classList.contains('tab-checkbox')) {
+    document.addEventListener("change", (e) => {
+      if (e.target.classList.contains("tab-checkbox")) {
         const tabId = parseInt(e.target.dataset.tabId);
         this.toggleTabSelection(tabId, e.target.checked);
       }
     });
 
     // Save tabs button
-    const saveTabsBtn = document.getElementById('save-tabs-btn');
+    const saveTabsBtn = document.getElementById("save-tabs-btn");
     if (saveTabsBtn) {
-      saveTabsBtn.addEventListener('click', () => {
+      saveTabsBtn.addEventListener("click", () => {
         this.saveSelectedTabs();
       });
     }
 
     // Refresh tabs button
-    const refreshTabsBtn = document.getElementById('refresh-tabs-btn');
+    const refreshTabsBtn = document.getElementById("refresh-tabs-btn");
     if (refreshTabsBtn) {
-      refreshTabsBtn.addEventListener('click', () => {
+      refreshTabsBtn.addEventListener("click", () => {
         this.loadCurrentTabs();
       });
     }
 
     // Group name input
-    const groupNameInput = document.getElementById('group-name-input');
+    const groupNameInput = document.getElementById("group-name-input");
     if (groupNameInput) {
-      groupNameInput.addEventListener('input', () => {
+      groupNameInput.addEventListener("input", () => {
         this.updateSaveButton();
       });
-      
-      groupNameInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+
+      groupNameInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
           this.saveSelectedTabs();
         }
       });
     }
 
     // Bookmark group actions
-    document.addEventListener('click', (e) => {
-      if (e.target.classList.contains('bookmark-group-btn')) {
+    document.addEventListener("click", (e) => {
+      if (e.target.classList.contains("bookmark-group-btn")) {
         const groupId = e.target.dataset.groupId;
-        const action = e.target.classList.contains('open') ? 'open' : 'delete';
-        
-        if (action === 'open') {
+        const action = e.target.classList.contains("open") ? "open" : "delete";
+
+        if (action === "open") {
           this.openBookmarkGroup(groupId);
         } else {
           this.deleteBookmarkGroup(groupId);
@@ -862,103 +922,115 @@ class TodoApp {
   }
 
   async saveSelectedTabs() {
-    const groupNameInput = document.getElementById('group-name-input');
+    const groupNameInput = document.getElementById("group-name-input");
     if (!groupNameInput) return;
 
     const groupName = groupNameInput.value.trim();
     if (!groupName) {
-      this.showNotification('Please enter a group name', 'error');
+      this.showNotification("Please enter a group name", "error");
       return;
     }
 
     if (this.selectedTabs.size === 0) {
-      this.showNotification('Please select at least one tab', 'error');
+      this.showNotification("Please select at least one tab", "error");
       return;
     }
 
     try {
-      const selectedTabsData = this.currentTabs.filter(tab => this.selectedTabs.has(tab.id));
-      
+      const selectedTabsData = this.currentTabs.filter((tab) =>
+        this.selectedTabs.has(tab.id)
+      );
+
       const newGroup = {
         id: Date.now().toString(),
         name: groupName,
         created: new Date().toISOString(),
-        tabs: selectedTabsData.map(tab => ({
+        tabs: selectedTabsData.map((tab) => ({
           title: tab.title,
           url: tab.url,
-          favIconUrl: tab.favIconUrl
-        }))
+          favIconUrl: tab.favIconUrl,
+        })),
       };
 
       this.bookmarkGroups.unshift(newGroup);
-      
+
       await chrome.storage.local.set({ bookmarkGroups: this.bookmarkGroups });
-      
+
       // Clear selections and input
       this.selectedTabs.clear();
-      groupNameInput.value = '';
-      
+      groupNameInput.value = "";
+
       this.renderTabs();
       this.renderBookmarkGroups();
-      
-      this.showNotification(`Group "${groupName}" saved with ${selectedTabsData.length} tabs`, 'success');
+
+      this.showNotification(
+        `Group "${groupName}" saved with ${selectedTabsData.length} tabs`,
+        "success"
+      );
     } catch (error) {
-      console.error('Error saving bookmark group:', error);
-      this.showNotification('Failed to save bookmark group', 'error');
+      console.error("Error saving bookmark group:", error);
+      this.showNotification("Failed to save bookmark group", "error");
     }
   }
 
   async openBookmarkGroup(groupId) {
     try {
-      const group = this.bookmarkGroups.find(g => g.id === groupId);
+      const group = this.bookmarkGroups.find((g) => g.id === groupId);
       if (!group) return;
 
       // Open all tabs in the group
       for (const tab of group.tabs) {
         await chrome.tabs.create({
           url: tab.url,
-          active: false
+          active: false,
         });
       }
 
-      this.showNotification(`Opened ${group.tabs.length} tabs from "${group.name}"`, 'success');
-      
+      this.showNotification(
+        `Opened ${group.tabs.length} tabs from "${group.name}"`,
+        "success"
+      );
+
       // Refresh the tabs list to show new tabs
       setTimeout(() => {
         this.loadCurrentTabs();
       }, 1000);
     } catch (error) {
-      console.error('Error opening bookmark group:', error);
-      this.showNotification('Failed to open bookmark group', 'error');
+      console.error("Error opening bookmark group:", error);
+      this.showNotification("Failed to open bookmark group", "error");
     }
   }
 
   async deleteBookmarkGroup(groupId) {
     try {
-      const group = this.bookmarkGroups.find(g => g.id === groupId);
+      const group = this.bookmarkGroups.find((g) => g.id === groupId);
       if (!group) return;
 
-      if (confirm(`Delete group "${group.name}"? This action cannot be undone.`)) {
-        this.bookmarkGroups = this.bookmarkGroups.filter(g => g.id !== groupId);
+      if (
+        confirm(`Delete group "${group.name}"? This action cannot be undone.`)
+      ) {
+        this.bookmarkGroups = this.bookmarkGroups.filter(
+          (g) => g.id !== groupId
+        );
         await chrome.storage.local.set({ bookmarkGroups: this.bookmarkGroups });
         this.renderBookmarkGroups();
-        this.showNotification(`Group "${group.name}" deleted`, 'success');
+        this.showNotification(`Group "${group.name}" deleted`, "success");
       }
     } catch (error) {
-      console.error('Error deleting bookmark group:', error);
-      this.showNotification('Failed to delete bookmark group', 'error');
+      console.error("Error deleting bookmark group:", error);
+      this.showNotification("Failed to delete bookmark group", "error");
     }
   }
 
   showTabbyError(message) {
-    const tabsGrid = document.getElementById('tabs-grid');
+    const tabsGrid = document.getElementById("tabs-grid");
     if (tabsGrid) {
       tabsGrid.innerHTML = `<div class="empty-tabs" style="color: #ef4444;">${message}</div>`;
     }
   }
 
   escapeHtml(text) {
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
   }
@@ -968,10 +1040,10 @@ class TodoApp {
     try {
       // Get user's location
       const location = await this.getCurrentLocation();
-      
+
       // Load weather data
       await this.loadWeatherData(location);
-      
+
       // Load prayer times
       await this.loadPrayerTimes(location);
     } catch (error) {
@@ -991,7 +1063,7 @@ class TodoApp {
         (position) => {
           resolve({
             latitude: position.coords.latitude,
-            longitude: position.coords.longitude
+            longitude: position.coords.longitude,
           });
         },
         (error) => {
@@ -999,7 +1071,7 @@ class TodoApp {
           console.warn("Geolocation error:", error);
           resolve({
             latitude: 23.8103, // Default to Dhaka, Bangladesh
-            longitude: 90.4125
+            longitude: 90.4125,
           });
         }
       );
@@ -1009,28 +1081,28 @@ class TodoApp {
   async loadWeatherData(location) {
     try {
       // Using OpenWeatherMap API (you'll need to get a free API key)
-      const API_KEY = 'YOUR_OPENWEATHER_API_KEY'; // Replace with actual API key
+      const API_KEY = "YOUR_OPENWEATHER_API_KEY"; // Replace with actual API key
       const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}&units=metric`;
       const uvUrl = `https://api.openweathermap.org/data/2.5/uvi?lat=${location.latitude}&lon=${location.longitude}&appid=${API_KEY}`;
-      
+
       // For demo purposes, we'll use mock data if no API key is provided
-      if (API_KEY === 'YOUR_OPENWEATHER_API_KEY') {
+      if (API_KEY === "YOUR_OPENWEATHER_API_KEY") {
         this.displayMockWeatherData();
         return;
       }
-      
+
       const [weatherResponse, uvResponse] = await Promise.all([
         fetch(weatherUrl),
-        fetch(uvUrl)
+        fetch(uvUrl),
       ]);
-      
+
       if (!weatherResponse.ok || !uvResponse.ok) {
-        throw new Error('Weather API request failed');
+        throw new Error("Weather API request failed");
       }
-      
+
       const weatherData = await weatherResponse.json();
       const uvData = await uvResponse.json();
-      
+
       this.displayWeatherData(weatherData, uvData);
     } catch (error) {
       console.error("Error loading weather data:", error);
@@ -1040,29 +1112,30 @@ class TodoApp {
 
   displayMockWeatherData() {
     // Mock weather data for demonstration
-    document.getElementById('temperature').textContent = '28°C';
-    document.getElementById('weatherLocation').textContent = 'Dhaka, Bangladesh';
-    document.getElementById('uvIndex').textContent = '7';
-    document.getElementById('uvLevel').textContent = 'High';
+    document.getElementById("temperature").textContent = "28°C";
+    document.getElementById("weatherLocation").textContent =
+      "Dhaka, Bangladesh";
+    document.getElementById("uvIndex").textContent = "7";
+    document.getElementById("uvLevel").textContent = "High";
   }
 
   displayWeatherData(weatherData, uvData) {
     const temperature = Math.round(weatherData.main.temp);
     const location = `${weatherData.name}, ${weatherData.sys.country}`;
     const uvIndex = Math.round(uvData.value);
-    
-    document.getElementById('temperature').textContent = `${temperature}°C`;
-    document.getElementById('weatherLocation').textContent = location;
-    document.getElementById('uvIndex').textContent = uvIndex;
-    document.getElementById('uvLevel').textContent = this.getUVLevel(uvIndex);
+
+    document.getElementById("temperature").textContent = `${temperature}°C`;
+    document.getElementById("weatherLocation").textContent = location;
+    document.getElementById("uvIndex").textContent = uvIndex;
+    document.getElementById("uvLevel").textContent = this.getUVLevel(uvIndex);
   }
 
   getUVLevel(uvIndex) {
-    if (uvIndex <= 2) return 'Low';
-    if (uvIndex <= 5) return 'Moderate';
-    if (uvIndex <= 7) return 'High';
-    if (uvIndex <= 10) return 'Very High';
-    return 'Extreme';
+    if (uvIndex <= 2) return "Low";
+    if (uvIndex <= 5) return "Moderate";
+    if (uvIndex <= 7) return "High";
+    if (uvIndex <= 10) return "Very High";
+    return "Extreme";
   }
 
   async loadPrayerTimes(location) {
@@ -1071,15 +1144,15 @@ class TodoApp {
       const year = today.getFullYear();
       const month = today.getMonth() + 1;
       const day = today.getDate();
-      
+
       // Using Islamic prayer times API
       const prayerUrl = `https://api.aladhan.com/v1/timings/${day}-${month}-${year}?latitude=${location.latitude}&longitude=${location.longitude}&method=2`;
-      
+
       const response = await fetch(prayerUrl);
       if (!response.ok) {
-        throw new Error('Prayer times API request failed');
+        throw new Error("Prayer times API request failed");
       }
-      
+
       const data = await response.json();
       this.displayPrayerTimes(data.data.timings);
     } catch (error) {
@@ -1091,34 +1164,36 @@ class TodoApp {
   displayMockPrayerTimes() {
     // Mock prayer times for demonstration
     const mockTimes = {
-      Fajr: '05:15',
-      Sunrise: '06:35',
-      Dhuhr: '12:15',
-      Asr: '15:45',
-      Maghrib: '18:05',
-      Isha: '19:25'
+      Fajr: "05:15",
+      Sunrise: "06:35",
+      Dhuhr: "12:15",
+      Asr: "15:45",
+      Maghrib: "18:05",
+      Isha: "19:25",
     };
-    
+
     this.displayPrayerTimes(mockTimes);
   }
 
   displayPrayerTimes(timings) {
-    const prayerTimes = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+    const prayerTimes = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
     const currentTime = new Date();
-    
-    prayerTimes.forEach(prayer => {
-      const prayerElement = document.getElementById(`${prayer.toLowerCase()}-time`);
+
+    prayerTimes.forEach((prayer) => {
+      const prayerElement = document.getElementById(
+        `${prayer.toLowerCase()}-time`
+      );
       if (prayerElement) {
-        const timeValue = prayerElement.querySelector('.prayer-time-value');
+        const timeValue = prayerElement.querySelector(".prayer-time-value");
         if (timeValue) {
           const time24 = timings[prayer];
           const time12 = this.convertTo12Hour(time24);
           timeValue.textContent = time12;
-          timeValue.classList.remove('loading');
-          
+          timeValue.classList.remove("loading");
+
           // Highlight current prayer time
           if (this.isCurrentPrayerTime(time24, currentTime)) {
-            prayerElement.classList.add('current');
+            prayerElement.classList.add("current");
           }
         }
       }
@@ -1126,18 +1201,18 @@ class TodoApp {
   }
 
   convertTo12Hour(time24) {
-    const [hours, minutes] = time24.split(':');
+    const [hours, minutes] = time24.split(":");
     const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
   }
 
   isCurrentPrayerTime(prayerTime, currentTime) {
-    const [hours, minutes] = prayerTime.split(':');
+    const [hours, minutes] = prayerTime.split(":");
     const prayerDate = new Date();
     prayerDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    
+
     // Check if current time is within 30 minutes of prayer time
     const timeDiff = Math.abs(currentTime - prayerDate);
     return timeDiff <= 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -1154,48 +1229,49 @@ class TodoApp {
   updateCurrentTime() {
     const now = new Date();
     const timeOptions = {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
     };
-    
+
     const dateOptions = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     };
-    
-    const timeElement = document.getElementById('currentTime');
-    const dateElement = document.getElementById('currentDate');
-    
+
+    const timeElement = document.getElementById("currentTime");
+    const dateElement = document.getElementById("currentDate");
+
     if (timeElement) {
-      timeElement.textContent = now.toLocaleTimeString('en-US', timeOptions);
-      timeElement.classList.remove('loading');
+      timeElement.textContent = now.toLocaleTimeString("en-US", timeOptions);
+      timeElement.classList.remove("loading");
     }
-    
+
     if (dateElement) {
-      dateElement.textContent = now.toLocaleDateString('en-US', dateOptions);
+      dateElement.textContent = now.toLocaleDateString("en-US", dateOptions);
     }
   }
 
   showWeatherError() {
-    document.getElementById('temperature').textContent = 'Error';
-    document.getElementById('temperature').classList.add('error');
-    document.getElementById('weatherLocation').textContent = 'Unable to load weather';
-    document.getElementById('uvIndex').textContent = 'N/A';
-    document.getElementById('uvLevel').textContent = 'Error';
-    
+    document.getElementById("temperature").textContent = "Error";
+    document.getElementById("temperature").classList.add("error");
+    document.getElementById("weatherLocation").textContent =
+      "Unable to load weather";
+    document.getElementById("uvIndex").textContent = "N/A";
+    document.getElementById("uvLevel").textContent = "Error";
+
     // Show error for prayer times too
-    const prayerTimes = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
-    prayerTimes.forEach(prayer => {
+    const prayerTimes = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"];
+    prayerTimes.forEach((prayer) => {
       const element = document.getElementById(`${prayer}-time`);
       if (element) {
-        const timeValue = element.querySelector('.prayer-time-value');
+        const timeValue = element.querySelector(".prayer-time-value");
         if (timeValue) {
-          timeValue.textContent = 'Error';
-          timeValue.classList.add('error');
+          timeValue.textContent = "Error";
+          timeValue.classList.add("error");
         }
       }
     });
