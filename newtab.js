@@ -4,7 +4,6 @@ class TodoApp {
   constructor() {
     this.todos = [];
     this.blockedSites = [];
-    this.searchTerm = "";
     this.init();
   }
 
@@ -110,7 +109,6 @@ class TodoApp {
   setupEventListeners() {
     const todoInput = document.getElementById("todoInput");
     const addBtn = document.getElementById("addBtn");
-    const todoSearch = document.getElementById("todoSearch");
     const blockedSiteInput = document.getElementById("blockedSiteInput");
     const blockBtn = document.getElementById("blockBtn");
     const exportBtn = document.getElementById("exportBtn");
@@ -122,11 +120,6 @@ class TodoApp {
       if (e.key === "Enter") {
         this.addTodo();
       }
-    });
-
-    todoSearch.addEventListener("input", (e) => {
-      this.searchTerm = e.target.value;
-      this.render();
     });
 
     // Blocked sites event listeners
@@ -221,6 +214,7 @@ class TodoApp {
       completed: false,
       createdAt: new Date().toISOString(),
       subTodos: [], // Add sub-todos support
+      subTodosExpanded: false, // Default to collapsed
     };
 
     this.todos.unshift(todo); // Add to beginning of array
@@ -263,6 +257,18 @@ class TodoApp {
   }
 
   // Sub-todo methods
+  toggleSubTodos(todoId) {
+    const todo = this.todos.find((t) => t.id === todoId);
+    if (!todo) return;
+
+    // Toggle the expanded state
+    todo.subTodosExpanded = !todo.subTodosExpanded;
+
+    // Save and re-render
+    this.saveTodos();
+    this.render();
+  }
+
   showSubTodoInput(todoId) {
     const todo = this.todos.find((t) => t.id === todoId);
     if (!todo) return;
@@ -658,64 +664,70 @@ class TodoApp {
   render() {
     const todoList = document.getElementById("todoList");
     const emptyState = document.getElementById("emptyState");
-    const searchResults = document.getElementById("searchResults");
 
     // Clear existing items
     todoList.innerHTML = "";
 
-    const filteredTodos = this.todos.filter((todo) =>
-      todo.text.toLowerCase().includes(this.searchTerm.toLowerCase())
-    );
-
-    if (this.searchTerm) {
-      searchResults.textContent = `${filteredTodos.length} result(s) found.`;
-      searchResults.style.display = "block";
-    } else {
-      searchResults.style.display = "none";
-    }
-
-    if (filteredTodos.length === 0) {
+    if (this.todos.length === 0) {
       emptyState.style.display = "block";
       todoList.style.display = "none";
-      if (this.todos.length > 0) {
-        emptyState.innerHTML = "<p>🤷 No tasks match your search.</p>";
-      } else {
-        emptyState.innerHTML =
-          "<p>🎉 No tasks yet! Add your first task above.</p>";
-      }
+      emptyState.innerHTML =
+        "<p>🎉 No tasks yet! Add your first task above.</p>";
     } else {
       emptyState.style.display = "none";
       todoList.style.display = "block";
 
-      filteredTodos.forEach((todo) => {
+      this.todos.forEach((todo) => {
         const li = document.createElement("li");
         li.className = `todo-item ${todo.completed ? "completed" : ""}`;
+
+        // Add collapse/expand button if there are sub-todos
+        const hasSubTodos = todo.subTodos && todo.subTodos.length > 0;
+        const toggleButton = hasSubTodos
+          ? `<button class="sub-todo-toggle" data-todo-id="${
+              todo.id
+            }" title="Toggle sub-tasks">
+            <span class="toggle-icon ${
+              todo.subTodosExpanded ? "expanded" : ""
+            }">▶</span>
+          </button>`
+          : "";
+
         li.innerHTML = `
-                    <span class="todo-text">${this.escapeHtml(todo.text)}</span>
-                    <div class="todo-actions">
-                        <button class="add-subtodo-btn" data-todo-id="${
-                          todo.id
-                        }" title="Add Sub-task">
-                            ➕ Sub
-                        </button>
-                        <button class="complete-btn" data-todo-id="${
-                          todo.id
-                        }" data-action="toggle">
-                            ${todo.completed ? "↩️ Undo" : "✅ Done"}
-                        </button>
-                        <button class="delete-btn" data-todo-id="${
-                          todo.id
-                        }" data-action="delete">
-                            🗑️ Delete
-                        </button>
-                    </div>
-                `;
+          <div class="todo-main">
+            ${toggleButton}
+            <span class="todo-text">${this.escapeHtml(todo.text)}</span>
+            <div class="todo-actions">
+              <button class="add-subtodo-btn" data-todo-id="${
+                todo.id
+              }" title="Add Sub-task">
+                ➕ Sub
+              </button>
+              <button class="complete-btn" data-todo-id="${
+                todo.id
+              }" data-action="toggle">
+                ${todo.completed ? "↩️ Undo" : "✅ Done"}
+              </button>
+              <button class="delete-btn" data-todo-id="${
+                todo.id
+              }" data-action="delete">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        `;
 
         // Add event listeners to the buttons
+        const toggleBtn = li.querySelector(".sub-todo-toggle");
         const addSubTodoBtn = li.querySelector(".add-subtodo-btn");
         const completeBtn = li.querySelector(".complete-btn");
         const deleteBtn = li.querySelector(".delete-btn");
 
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", () =>
+            this.toggleSubTodos(todo.id)
+          );
+        }
         addSubTodoBtn.addEventListener("click", () =>
           this.showSubTodoInput(todo.id)
         );
@@ -725,9 +737,12 @@ class TodoApp {
         todoList.appendChild(li);
 
         // Render sub-todos if they exist
-        if (todo.subTodos && todo.subTodos.length > 0) {
+        if (hasSubTodos) {
           const subTodoContainer = document.createElement("div");
-          subTodoContainer.className = "sub-todo-container";
+          subTodoContainer.className = `sub-todo-container ${
+            todo.subTodosExpanded ? "expanded" : ""
+          }`;
+          subTodoContainer.dataset.todoId = todo.id;
 
           todo.subTodos.forEach((subTodo) => {
             const subLi = document.createElement("div");
@@ -752,6 +767,7 @@ class TodoApp {
               </div>
             `;
 
+            // Add event listeners for sub-todo buttons
             const subCompleteBtn = subLi.querySelector(".sub-complete-btn");
             const subDeleteBtn = subLi.querySelector(".sub-delete-btn");
 
@@ -765,7 +781,7 @@ class TodoApp {
             subTodoContainer.appendChild(subLi);
           });
 
-          todoList.appendChild(subTodoContainer);
+          li.appendChild(subTodoContainer);
         }
       });
     }
@@ -908,9 +924,11 @@ class TodoApp {
     this.currentTabs = [];
     this.selectedTabs = new Set();
     this.bookmarkGroups = [];
+    this.autoRefreshInterval = null;
 
     this.loadBookmarkGroups();
     this.setupTabbyEventListeners();
+    this.loadCurrentTabs();
   }
 
   async loadCurrentTabs() {
@@ -1031,12 +1049,16 @@ class TodoApp {
   updateSaveButton() {
     const saveBtn = document.getElementById("save-tabs-btn");
     const groupInput = document.getElementById("group-name-input");
+    const existingGroupsSelect = document.getElementById(
+      "existing-groups-select"
+    );
 
-    if (saveBtn && groupInput) {
+    if (saveBtn && groupInput && existingGroupsSelect) {
       const hasSelection = this.selectedTabs.size > 0;
       const hasName = groupInput.value.trim().length > 0;
+      const hasSelectedGroup = existingGroupsSelect.value !== "";
 
-      saveBtn.disabled = !hasSelection || !hasName;
+      saveBtn.disabled = !hasSelection || (!hasName && !hasSelectedGroup);
     }
   }
 
@@ -1105,6 +1127,11 @@ class TodoApp {
               <div class="bookmark-tab-url">${this.escapeHtml(
                 new URL(tab.url).hostname
               )}</div>
+              <button class="bookmark-tab-remove" data-group-id="${
+                group.id
+              }" data-tab-url="${this.escapeHtml(
+                tab.url
+              )}" title="Remove tab from group">×</button>
             </div>
           `
             )
@@ -1117,6 +1144,9 @@ class TodoApp {
 
     // Add event listeners for expand/collapse
     this.setupExpandCollapseListeners();
+
+    // Update existing groups select dropdown
+    this.updateExistingGroupsSelect();
   }
 
   setupExpandCollapseListeners() {
@@ -1227,12 +1257,24 @@ class TodoApp {
     if (groupNameInput) {
       groupNameInput.addEventListener("input", () => {
         this.updateSaveButton();
+        this.handleGroupInputChange();
       });
 
       groupNameInput.addEventListener("keypress", (e) => {
         if (e.key === "Enter") {
           this.saveSelectedTabs();
         }
+      });
+    }
+
+    // Existing groups select
+    const existingGroupsSelect = document.getElementById(
+      "existing-groups-select"
+    );
+    if (existingGroupsSelect) {
+      existingGroupsSelect.addEventListener("change", () => {
+        this.updateSaveButton();
+        this.handleGroupInputChange();
       });
     }
 
@@ -1248,16 +1290,42 @@ class TodoApp {
           this.deleteBookmarkGroup(groupId);
         }
       }
+
+      // Handle individual tab removal from saved groups
+      if (e.target.classList.contains("bookmark-tab-remove")) {
+        const groupId = e.target.dataset.groupId;
+        const tabUrl = e.target.dataset.tabUrl;
+        this.removeTabFromGroup(groupId, tabUrl);
+      }
     });
+
+    // Auto-refresh checkbox
+    const autoRefreshCheckbox = document.getElementById(
+      "auto-refresh-checkbox"
+    );
+    if (autoRefreshCheckbox) {
+      autoRefreshCheckbox.addEventListener("change", (e) => {
+        this.toggleAutoRefresh(e.target.checked);
+      });
+    }
   }
 
   async saveSelectedTabs() {
     const groupNameInput = document.getElementById("group-name-input");
-    if (!groupNameInput) return;
+    const existingGroupsSelect = document.getElementById(
+      "existing-groups-select"
+    );
+    if (!groupNameInput || !existingGroupsSelect) return;
 
     const groupName = groupNameInput.value.trim();
-    if (!groupName) {
-      this.showNotification("Please enter a group name", "error");
+    const selectedExistingGroup = existingGroupsSelect.value;
+
+    // Check if user has selected an existing group or entered a new name
+    if (!groupName && !selectedExistingGroup) {
+      this.showNotification(
+        "Please enter a group name or select an existing group",
+        "error"
+      );
       return;
     }
 
@@ -1271,32 +1339,74 @@ class TodoApp {
         this.selectedTabs.has(tab.id)
       );
 
-      const newGroup = {
-        id: Date.now().toString(),
-        name: groupName,
-        created: new Date().toISOString(),
-        tabs: selectedTabsData.map((tab) => ({
-          title: tab.title,
-          url: tab.url,
-          favIconUrl: tab.favIconUrl,
-        })),
-      };
+      const tabsToAdd = selectedTabsData.map((tab) => ({
+        title: tab.title,
+        url: tab.url,
+        favIconUrl: tab.favIconUrl,
+      }));
 
-      this.bookmarkGroups.unshift(newGroup);
+      if (selectedExistingGroup) {
+        // Add to existing group
+        const existingGroup = this.bookmarkGroups.find(
+          (g) => g.id === selectedExistingGroup
+        );
+        if (existingGroup) {
+          // Check for duplicate URLs
+          const existingUrls = existingGroup.tabs.map((tab) => tab.url);
+          const newTabs = tabsToAdd.filter(
+            (tab) => !existingUrls.includes(tab.url)
+          );
 
-      await chrome.storage.local.set({ bookmarkGroups: this.bookmarkGroups });
+          if (newTabs.length === 0) {
+            this.showNotification(
+              "All selected tabs are already in this group",
+              "error"
+            );
+            return;
+          }
 
-      // Clear selections and input
+          existingGroup.tabs.push(...newTabs);
+          existingGroup.updated = new Date().toISOString();
+
+          await chrome.storage.local.set({
+            bookmarkGroups: this.bookmarkGroups,
+          });
+
+          this.showNotification(
+            `Added ${newTabs.length} new tabs to "${existingGroup.name}"`,
+            "success"
+          );
+        } else {
+          this.showNotification("Selected group not found", "error");
+          return;
+        }
+      } else {
+        // Create new group
+        const newGroup = {
+          id: Date.now().toString(),
+          name: groupName,
+          created: new Date().toISOString(),
+          tabs: tabsToAdd,
+        };
+
+        this.bookmarkGroups.unshift(newGroup);
+
+        await chrome.storage.local.set({ bookmarkGroups: this.bookmarkGroups });
+
+        this.showNotification(
+          `Group "${groupName}" saved with ${selectedTabsData.length} tabs`,
+          "success"
+        );
+      }
+
+      // Clear selections and inputs
       this.selectedTabs.clear();
       groupNameInput.value = "";
+      existingGroupsSelect.value = "";
 
       this.renderTabs();
       this.renderBookmarkGroups();
-
-      this.showNotification(
-        `Group "${groupName}" saved with ${selectedTabsData.length} tabs`,
-        "success"
-      );
+      this.updateExistingGroupsSelect();
     } catch (error) {
       console.error("Error saving bookmark group:", error);
       this.showNotification("Failed to save bookmark group", "error");
@@ -1349,6 +1459,91 @@ class TodoApp {
     } catch (error) {
       console.error("Error deleting bookmark group:", error);
       this.showNotification("Failed to delete bookmark group", "error");
+    }
+  }
+
+  async removeTabFromGroup(groupId, tabUrl) {
+    try {
+      const group = this.bookmarkGroups.find((g) => g.id === groupId);
+      if (!group) return;
+
+      const tabIndex = group.tabs.findIndex((tab) => tab.url === tabUrl);
+      if (tabIndex === -1) return;
+
+      const removedTab = group.tabs[tabIndex];
+      group.tabs.splice(tabIndex, 1);
+
+      // If group is empty after removal, optionally delete the group
+      if (group.tabs.length === 0) {
+        if (confirm(`Group "${group.name}" is now empty. Delete the group?`)) {
+          this.bookmarkGroups = this.bookmarkGroups.filter(
+            (g) => g.id !== groupId
+          );
+        }
+      }
+
+      await chrome.storage.local.set({ bookmarkGroups: this.bookmarkGroups });
+      this.renderBookmarkGroups();
+      this.showNotification(
+        `Tab "${removedTab.title}" removed from group`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error removing tab from group:", error);
+      this.showNotification("Failed to remove tab from group", "error");
+    }
+  }
+
+  toggleAutoRefresh(enabled) {
+    if (enabled) {
+      this.autoRefreshInterval = setInterval(() => {
+        this.loadCurrentTabs();
+      }, 5000); // 5 seconds
+      this.showNotification("Auto-refresh enabled (5 seconds)", "success");
+    } else {
+      if (this.autoRefreshInterval) {
+        clearInterval(this.autoRefreshInterval);
+        this.autoRefreshInterval = null;
+      }
+      this.showNotification("Auto-refresh disabled", "success");
+    }
+  }
+
+  updateExistingGroupsSelect() {
+    const existingGroupsSelect = document.getElementById(
+      "existing-groups-select"
+    );
+    if (!existingGroupsSelect) return;
+
+    // Clear existing options except the first one
+    existingGroupsSelect.innerHTML =
+      '<option value="">Select existing group...</option>';
+
+    // Add options for each existing group
+    this.bookmarkGroups.forEach((group) => {
+      const option = document.createElement("option");
+      option.value = group.id;
+      option.textContent = `${group.name} (${group.tabs.length} tabs)`;
+      existingGroupsSelect.appendChild(option);
+    });
+  }
+
+  handleGroupInputChange() {
+    const groupNameInput = document.getElementById("group-name-input");
+    const existingGroupsSelect = document.getElementById(
+      "existing-groups-select"
+    );
+
+    if (!groupNameInput || !existingGroupsSelect) return;
+
+    // If user types in the input, clear the select
+    if (groupNameInput.value.trim()) {
+      existingGroupsSelect.value = "";
+    }
+
+    // If user selects an existing group, clear the input
+    if (existingGroupsSelect.value) {
+      groupNameInput.value = "";
     }
   }
 

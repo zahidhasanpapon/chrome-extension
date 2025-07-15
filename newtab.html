@@ -186,6 +186,44 @@
         margin-left: 40px;
         margin-top: 10px;
         margin-bottom: 20px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+      }
+
+      .sub-todo-container.expanded {
+        max-height: 500px;
+        transition: max-height 0.3s ease-in;
+      }
+
+      .todo-main {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .sub-todo-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 3px;
+        font-size: 12px;
+        transition: background 0.2s;
+        color: #666;
+      }
+
+      .sub-todo-toggle:hover {
+        background: #f3f4f6;
+      }
+
+      .toggle-icon {
+        display: inline-block;
+        transition: transform 0.2s;
+      }
+
+      .toggle-icon.expanded {
+        transform: rotate(90deg);
       }
 
       .sub-todo-item {
@@ -815,6 +853,7 @@
         display: flex;
         gap: 10px;
         margin-bottom: 15px;
+        flex-wrap: wrap;
       }
 
       .tabby-btn {
@@ -865,16 +904,122 @@
         border-color: #667eea;
       }
 
+      .group-input-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 300px;
+      }
+
+      .group-input-divider {
+        font-size: 12px;
+        color: #666;
+        font-weight: bold;
+        padding: 0 5px;
+      }
+
+      .existing-groups-select {
+        flex: 1;
+        padding: 8px 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.3s;
+        background: white;
+        min-width: 140px;
+      }
+
+      .existing-groups-select:focus {
+        border-color: #667eea;
+      }
+
+      .auto-refresh-toggle {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: #666;
+        margin-left: 10px;
+      }
+
+      .auto-refresh-toggle input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
+      }
+
+      .tabby-main-layout {
+        display: flex;
+        gap: 20px;
+        height: calc(100vh - 300px);
+        min-height: 600px;
+      }
+
+      .saved-groups-column {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .current-tabs-column {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .bookmark-groups {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        max-height: none;
+        overflow: hidden;
+      }
+
+      .bookmark-groups h4 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 18px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+      }
+
+      #bookmark-groups-list {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+
+      .bookmark-tab-remove {
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-size: 10px;
+        cursor: pointer;
+        margin-left: 8px;
+        transition: background-color 0.2s;
+      }
+
+      .bookmark-tab-remove:hover {
+        background: #dc2626;
+      }
+
       .tabs-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
         gap: 10px;
-        max-height: 400px;
+        flex: 1;
         overflow-y: auto;
         border: 1px solid #e0e0e0;
         border-radius: 10px;
         padding: 15px;
         background: #f8f9fa;
+        max-height: none;
       }
 
       .tab-item {
@@ -1271,26 +1416,11 @@
           <button id="addBtn" class="add-btn">Add Task</button>
         </div>
 
-        <div class="todo-input-container">
-          <input
-            type="text"
-            id="todoSearch"
-            class="todo-input"
-            placeholder="Search tasks..."
-          />
-        </div>
-
         <ul id="todoList" class="todo-list"></ul>
 
         <div id="emptyState" class="empty-state" style="display: none">
           <p>🎉 No tasks yet! Add your first task above.</p>
         </div>
-
-        <div
-          id="searchResults"
-          class="search-results"
-          style="display: none"
-        ></div>
 
         <div class="stats">
           <div class="stat-item">
@@ -1339,20 +1469,8 @@
               <button class="shortcut-btn" data-site="reddit.com">
                 🔴 Reddit
               </button>
-              <button class="shortcut-btn" data-site="twitter.com">
+              <button class="shortcut-btn" data-site="x.com">
                 🐦 Twitter/X
-              </button>
-              <button class="shortcut-btn" data-site="tiktok.com">
-                🎵 TikTok
-              </button>
-              <button class="shortcut-btn" data-site="netflix.com">
-                🎬 Netflix
-              </button>
-              <button class="shortcut-btn" data-site="twitch.tv">
-                🎮 Twitch
-              </button>
-              <button class="shortcut-btn" data-site="discord.com">
-                💬 Discord
               </button>
             </div>
           </div>
@@ -1413,43 +1531,64 @@
       <div id="tabby-tab" class="tab-content">
         <div class="tabby-container">
           <div class="tabby-controls">
-            <input
-              type="text"
-              id="group-name-input"
-              class="group-name-input"
-              placeholder="Enter group name..."
-              maxlength="50"
-            />
+            <div class="group-input-section">
+              <input
+                type="text"
+                id="group-name-input"
+                class="group-name-input"
+                placeholder="Enter new group name..."
+                maxlength="50"
+              />
+              <span class="group-input-divider">OR</span>
+              <select
+                id="existing-groups-select"
+                class="existing-groups-select"
+              >
+                <option value="">Select existing group...</option>
+              </select>
+            </div>
             <button id="save-tabs-btn" class="tabby-btn primary" disabled>
               Save Selected
             </button>
             <button id="refresh-tabs-btn" class="tabby-btn secondary">
               Refresh Tabs
             </button>
-          </div>
-
-          <div class="select-all-controls">
-            <label style="display: flex; align-items: center">
-              <input
-                type="checkbox"
-                id="select-all-checkbox"
-                class="select-all-checkbox"
-              />
-              <span style="margin-left: 5px">Select All</span>
+            <label class="auto-refresh-toggle">
+              <input type="checkbox" id="auto-refresh-checkbox" />
+              <span>Auto-refresh (5s)</span>
             </label>
-            <span id="selected-count" class="selected-count"
-              >0 tabs selected</span
-            >
           </div>
 
-          <div id="tabs-grid" class="tabs-grid">
-            <div class="empty-tabs">Loading tabs...</div>
-          </div>
+          <div class="tabby-main-layout">
+            <!-- Left Column: Saved Groups -->
+            <div class="saved-groups-column">
+              <div class="bookmark-groups">
+                <h4>💾 Saved Groups</h4>
+                <div id="bookmark-groups-list" class="empty-groups">
+                  No saved groups yet. Create your first group above!
+                </div>
+              </div>
+            </div>
 
-          <div class="bookmark-groups">
-            <h4>💾 Saved Groups</h4>
-            <div id="bookmark-groups-list" class="empty-groups">
-              No saved groups yet. Create your first group above!
+            <!-- Right Column: Current Tabs -->
+            <div class="current-tabs-column">
+              <div class="select-all-controls">
+                <label style="display: flex; align-items: center">
+                  <input
+                    type="checkbox"
+                    id="select-all-checkbox"
+                    class="select-all-checkbox"
+                  />
+                  <span style="margin-left: 5px">Select All</span>
+                </label>
+                <span id="selected-count" class="selected-count"
+                  >0 tabs selected</span
+                >
+              </div>
+
+              <div id="tabs-grid" class="tabs-grid">
+                <div class="empty-tabs">Loading tabs...</div>
+              </div>
             </div>
           </div>
         </div>
