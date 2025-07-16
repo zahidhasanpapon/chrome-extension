@@ -1,6 +1,6 @@
 # Productivity Hub - Chrome Extension
 
-A modern Chrome extension that transforms your new tab page into a productivity hub with todo management, website blocking, weather information, prayer times, and powerful bookmark grouping capabilities.
+A feature-rich Chrome extension built with **React 18**, **TypeScript**, **Tailwind CSS**, and **shadcn/ui** that transforms your new tab page into a comprehensive productivity hub with advanced todo management, smart website blocking, time & weather integration, and powerful tab management capabilities.
 
 ## 🚀 Features
 
@@ -70,17 +70,25 @@ A modern Chrome extension that transforms your new tab page into a productivity 
 
 ### Built With
 
+- **React 18** - Modern React with hooks and TypeScript
+- **TypeScript** - Type safety and better developer experience
+- **Tailwind CSS** - Utility-first CSS framework with custom theme
+- **shadcn/ui** - High-quality component library
+- **Vite** - Fast build tool with Chrome extension plugin
 - **Manifest V3** - Latest Chrome extension standard
-- **Vanilla JavaScript** - No external dependencies
 - **Chrome Storage API** - For persistent data storage
-- **Chrome Tabs API** - For real-time website blocking
+- **Chrome Tabs API** - For real-time website blocking and tab management
 
 ### Key Components
 
-- **New Tab Override**: Replaces Chrome's default new tab page
-- **Content Script**: Handles website blocking on all pages
-- **Service Worker**: Background processing and message handling
-- **Popup Interface**: Quick access to extension settings
+- **ProductivityHub** - Main React app with tabbed interface
+- **TodoList** - Advanced todo management with sub-tasks
+- **TabbyManager** - Browser tab and bookmark management
+- **TimeWeatherWidget** - Real-time clock, weather, and prayer times
+- **QuickShortcuts** - One-click block/unblock buttons
+- **BlockedSitesList** - Smart website blocking with bulk operations
+- **Content Script** - TypeScript-based website blocking
+- **Background Service Worker** - Modern message handling and storage
 
 ## 🎯 How It Works
 
@@ -134,7 +142,11 @@ A modern Chrome extension that transforms your new tab page into a productivity 
 
 - **Ctrl/Cmd + T** - Switch to todos tab
 - **Ctrl/Cmd + B** - Switch to blocked sites tab
-- **Ctrl/Cmd + K** - Focus on todo input field
+- **Ctrl/Cmd + S** - Switch to statistics tab
+- **Ctrl/Cmd + M** - Switch to Tabby (tab manager) tab
+- **Ctrl/Cmd + D** - Toggle dark/light theme
+- **Ctrl/Cmd + K** - Focus on search input field
+- **ESC** - Clear search/cancel current action
 - **Enter** - Add new todo or blocked site
 
 ## 🛠️ Development
@@ -142,24 +154,72 @@ A modern Chrome extension that transforms your new tab page into a productivity 
 ### Project Structure
 
 ```
-chrome-extension/
-├── manifest.json          # Extension manifest
-├── newtab.html           # New tab page
-├── newtab.js             # Main application logic
-├── content.js            # Website blocking script
-├── background.js         # Service worker
-├── popup.html/js         # Extension popup
-├── options.html/js       # Options page
-├── style.css             # Global styles
-└── icons/                # Extension icons
+src/
+├── components/          # Reusable React components
+│   ├── ui/             # shadcn/ui components (Button, Card, Input, etc.)
+│   ├── TodoList.tsx    # Advanced todo management with sub-tasks
+│   ├── TabbyManager.tsx # Browser tab and bookmark management
+│   ├── TimeWeatherWidget.tsx # Clock, weather, and prayer times
+│   ├── QuickShortcuts.tsx # One-click block/unblock buttons
+│   ├── BlockedSitesList.tsx # Website blocking with bulk operations
+│   └── StatsCards.tsx  # Productivity statistics display
+├── newtab/             # New tab page React app
+│   ├── index.html      # HTML entry point
+│   ├── index.tsx       # React root
+│   └── ProductivityHub.tsx # Main app component
+├── popup/              # Extension popup React app
+│   ├── index.html
+│   ├── index.tsx
+│   └── PopupApp.tsx
+├── options/            # Options page React app
+│   ├── index.html
+│   ├── index.tsx
+│   └── OptionsApp.tsx
+├── background/         # Background service worker
+│   └── index.ts        # TypeScript background script
+├── content/            # Content script for website blocking
+│   └── index.ts        # TypeScript content script
+├── lib/                # Utility functions
+│   └── utils.ts        # Storage management and helpers
+├── types/              # TypeScript type definitions
+│   └── index.ts        # Shared interfaces and types
+├── globals.css         # Tailwind CSS with custom styles
+└── manifest.json       # Chrome extension manifest
+```
+
+### Development Scripts
+
+```bash
+# Install dependencies
+npm install
+
+# Development server (for testing components)
+npm run dev
+
+# Build for production
+npm run build
+
+# Watch mode for extension development
+npm run build:watch
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
+
+# Fix linting issues
+npm run lint:fix
 ```
 
 ### Running in Development
 
-1. Make your changes to the code
-2. Go to `chrome://extensions/`
-3. Click the refresh icon on your extension
-4. Open a new tab to test changes
+1. Install dependencies: `npm install`
+2. Build the extension: `npm run build` or `npm run build:watch`
+3. Go to `chrome://extensions/`
+4. Enable "Developer mode" and click "Load unpacked"
+5. Select the `dist` folder
+6. Make changes and refresh the extension to test
 
 ## 🤝 Contributing
 
