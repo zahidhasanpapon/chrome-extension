@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { CheckCircle, Clock, Target, Globe, Sun, Moon, BarChart3, Plus, Search } from 'lucide-react'
+import { CheckCircle, Target, Globe, Sun, Moon, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -8,17 +8,15 @@ import { StorageManager } from '@/lib/utils'
 import { Todo, BlockedSite, ProductivityStats } from '@/types'
 import TodoList from '@/components/TodoList'
 import BlockedSitesList from '@/components/BlockedSitesList'
-import StatsCards from '@/components/StatsCards'
 import TimeWeatherWidget from '@/components/TimeWeatherWidget'
-import QuickShortcuts from '@/components/QuickShortcuts'
 import TabbyManager from '@/components/TabbyManager'
 
 const ProductivityHub: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'todos' | 'blocked' | 'stats' | 'tabby'>('todos')
+    const [activeTab, setActiveTab] = useState<'todos' | 'blocked' | 'tabby'>('todos')
     const [todos, setTodos] = useState<Todo[]>([])
     const [blockedSites, setBlockedSites] = useState<BlockedSite[]>([])
     const [theme, setTheme] = useState<'light' | 'dark'>('light')
-    const [searchTerm, setSearchTerm] = useState('')
+
     const [isLoading, setIsLoading] = useState(true)
     const [stats, setStats] = useState<ProductivityStats>({
         totalTodos: 0,
@@ -71,10 +69,7 @@ const ProductivityHub: React.FC = () => {
                         e.preventDefault()
                         setActiveTab('blocked')
                         break
-                    case 's':
-                        e.preventDefault()
-                        setActiveTab('stats')
-                        break
+
                     case 'm':
                         e.preventDefault()
                         setActiveTab('tabby')
@@ -83,21 +78,11 @@ const ProductivityHub: React.FC = () => {
                         e.preventDefault()
                         toggleTheme()
                         break
-                    case 'k':
-                        e.preventDefault()
-                        // Focus on search input if available
-                        const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement
-                        if (searchInput) {
-                            searchInput.focus()
-                        }
-                        break
+
                 }
             }
 
-            // ESC key to clear search
-            if (e.key === 'Escape') {
-                setSearchTerm('')
-            }
+
         }
 
         document.addEventListener('keydown', handleKeyDown)
@@ -310,16 +295,7 @@ const ProductivityHub: React.FC = () => {
                 {/* Time & Weather Widget */}
                 <TimeWeatherWidget theme={theme} />
 
-                {/* Stats Cards */}
-                <StatsCards stats={stats} />
 
-                {/* Quick Shortcuts */}
-                <QuickShortcuts
-                    blockedSites={blockedSites}
-                    onBlockSite={addBlockedSite}
-                    onUnblockSite={removeBlockedSite}
-                    theme={theme}
-                />
 
                 {/* Tab Navigation */}
                 <div className="flex justify-center mb-8">
@@ -351,14 +327,7 @@ const ProductivityHub: React.FC = () => {
                                     </Badge>
                                 )}
                             </Button>
-                            <Button
-                                variant={activeTab === 'stats' ? 'default' : 'ghost'}
-                                onClick={() => setActiveTab('stats')}
-                                className={`${activeTab === 'stats' ? 'bg-white text-gray-900' : 'text-white hover:bg-white/20'}`}
-                            >
-                                <BarChart3 className="w-4 h-4 mr-2" />
-                                Statistics
-                            </Button>
+
                             <Button
                                 variant={activeTab === 'tabby' ? 'default' : 'ghost'}
                                 onClick={() => setActiveTab('tabby')}
@@ -383,8 +352,6 @@ const ProductivityHub: React.FC = () => {
                             onAddSubTodo={addSubTodo}
                             onToggleSubTodo={toggleSubTodo}
                             onDeleteSubTodo={deleteSubTodo}
-                            searchTerm={searchTerm}
-                            onSearchChange={setSearchTerm}
                         />
                     )}
 
@@ -401,62 +368,7 @@ const ProductivityHub: React.FC = () => {
                         <TabbyManager theme={theme} />
                     )}
 
-                    {activeTab === 'stats' && (
-                        <Card className="glass-card border-white/20">
-                            <CardHeader>
-                                <CardTitle className="flex items-center text-gray-900">
-                                    <BarChart3 className="w-6 h-6 mr-2 text-focus-500" />
-                                    Productivity Statistics
-                                </CardTitle>
-                                <CardDescription>
-                                    Track your progress and stay motivated
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <h3 className="text-lg font-semibold text-gray-900">Overview</h3>
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-600">Total Tasks</span>
-                                                <span className="font-bold text-gray-900">{stats.totalTodos}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-600">Completion Rate</span>
-                                                <Badge variant="motivate">{stats.completionRate}%</Badge>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-600">Blocked Sites</span>
-                                                <Badge variant="destructive">{stats.blockedSitesCount}</Badge>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-600">Productivity Score</span>
-                                                <Badge variant="focus">{stats.productivity}%</Badge>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="space-y-4">
-                                        <h3 className="text-lg font-semibold text-gray-900">Achievements</h3>
-                                        <div className="space-y-3">
-                                            <div className="flex items-center space-x-2">
-                                                <Target className="w-4 h-4 text-focus-500" />
-                                                <span className="text-sm text-gray-600">Streak: {stats.streakDays} days</span>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <CheckCircle className="w-4 h-4 text-motivate-500" />
-                                                <span className="text-sm text-gray-600">Today: {stats.todayCompleted} completed</span>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <Clock className="w-4 h-4 text-yellow-500" />
-                                                <span className="text-sm text-gray-600">Weekly Progress: 78%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
                 </div>
             </div>
         </div>

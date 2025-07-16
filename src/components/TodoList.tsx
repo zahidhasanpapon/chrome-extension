@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Plus, Search, Check, Trash2, Clock, AlertCircle, ChevronRight, ChevronDown } from 'lucide-react'
+import { Plus, Check, Trash2, Clock, AlertCircle, ChevronRight, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -16,8 +16,6 @@ interface TodoListProps {
     onAddSubTodo: (todoId: string, text: string) => void
     onToggleSubTodo: (todoId: string, subTodoId: string) => void
     onDeleteSubTodo: (todoId: string, subTodoId: string) => void
-    searchTerm: string
-    onSearchChange: (term: string) => void
 }
 
 const TodoList: React.FC<TodoListProps> = ({
@@ -28,9 +26,7 @@ const TodoList: React.FC<TodoListProps> = ({
     onUpdateTodo,
     onAddSubTodo,
     onToggleSubTodo,
-    onDeleteSubTodo,
-    searchTerm,
-    onSearchChange
+    onDeleteSubTodo
 }) => {
     const [newTodo, setNewTodo] = useState('')
     const [showCompleted, setShowCompleted] = useState(false)
@@ -51,9 +47,8 @@ const TodoList: React.FC<TodoListProps> = ({
     }
 
     const filteredTodos = todos.filter(todo => {
-        const matchesSearch = todo.text.toLowerCase().includes(searchTerm.toLowerCase())
         const matchesCompleted = showCompleted ? true : !todo.completed
-        return matchesSearch && matchesCompleted
+        return matchesCompleted
     })
 
     const getPriorityIcon = (priority: string) => {
@@ -104,19 +99,10 @@ const TodoList: React.FC<TodoListProps> = ({
                 </CardContent>
             </Card>
 
-            {/* Search and Filter */}
+            {/* Filter */}
             <Card className="glass-card border-white/20">
                 <CardContent className="pt-6">
-                    <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                            <Input
-                                value={searchTerm}
-                                onChange={(e) => onSearchChange(e.target.value)}
-                                placeholder="Search todos..."
-                                className="pl-10"
-                            />
-                        </div>
+                    <div className="flex justify-center">
                         <Button
                             variant={showCompleted ? "default" : "outline"}
                             onClick={() => setShowCompleted(!showCompleted)}
@@ -135,10 +121,10 @@ const TodoList: React.FC<TodoListProps> = ({
                             <div className="text-center py-8 text-gray-500">
                                 <Check className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                 <p className="text-lg font-medium">
-                                    {searchTerm ? 'No matching todos' : 'No todos yet'}
+                                    No todos yet
                                 </p>
                                 <p className="text-sm">
-                                    {searchTerm ? 'Try adjusting your search' : 'Add your first task to get started'}
+                                    Add your first task to get started
                                 </p>
                             </div>
                         </CardContent>

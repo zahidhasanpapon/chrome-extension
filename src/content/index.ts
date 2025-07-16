@@ -19,6 +19,7 @@ class WebsiteBlocker {
                 return
             }
 
+            // Immediately check if current site should be blocked
             await this.loadBlockedSites()
             this.checkCurrentSite()
             this.setupMessageListener()
@@ -116,11 +117,12 @@ class WebsiteBlocker {
     }
 
     private preventNavigation() {
-        if (window.history && window.history.pushState) {
-            window.history.pushState(null, null, window.location.href)
+        if (window.history && window.history.replaceState) {
+            // Use replaceState instead of pushState to avoid warnings
+            window.history.replaceState(null, '', window.location.href)
 
             const preventBack = () => {
-                window.history.pushState(null, null, window.location.href)
+                window.history.replaceState(null, '', window.location.href)
             }
 
             window.addEventListener("popstate", preventBack)
@@ -281,11 +283,5 @@ class WebsiteBlocker {
     }
 }
 
-// Initialize the website blocker
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        new WebsiteBlocker()
-    })
-} else {
-    new WebsiteBlocker()
-}
+// Initialize the website blocker immediately
+new WebsiteBlocker()

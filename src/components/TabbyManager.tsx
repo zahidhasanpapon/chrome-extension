@@ -8,14 +8,15 @@ import {
     FolderOpen,
     Plus,
     RefreshCw,
-    Bookmark,
     X,
     ExternalLink,
     Check,
     Folder,
-    Globe
+    Globe,
+    ChevronDown,
+    ChevronRight
 } from 'lucide-react'
-import { ChromeTab, TabGroup, BookmarkGroup } from '@/types'
+import { ChromeTab, TabGroup } from '@/types'
 import { StorageManager } from '@/lib/utils'
 
 interface TabbyManagerProps {
@@ -26,16 +27,15 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
     const [currentTabs, setCurrentTabs] = useState<ChromeTab[]>([])
     const [selectedTabs, setSelectedTabs] = useState<Set<number>>(new Set())
     const [tabGroups, setTabGroups] = useState<TabGroup[]>([])
-    const [bookmarkGroups, setBookmarkGroups] = useState<BookmarkGroup[]>([])
     const [newGroupName, setNewGroupName] = useState('')
     const [isLoading, setIsLoading] = useState(true)
     const [autoRefresh, setAutoRefresh] = useState(false)
     const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null)
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         loadCurrentTabs()
         loadTabGroups()
-        loadBookmarkGroups()
     }, [])
 
     useEffect(() => {
@@ -94,14 +94,7 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
         }
     }
 
-    const loadBookmarkGroups = async () => {
-        try {
-            const groups = await StorageManager.get<BookmarkGroup[]>('bookmarkGroups')
-            setBookmarkGroups(groups || [])
-        } catch (error) {
-            console.error('Error loading bookmark groups:', error)
-        }
-    }
+
 
     const toggleTabSelection = (tabId: number) => {
         const newSelected = new Set(selectedTabs)
@@ -160,48 +153,36 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
         }
     }
 
-    const createBookmarkGroup = async () => {
-        if (!newGroupName.trim() || selectedTabs.size === 0) {
-            return
+    const toggleGroupExpansion = (groupId: string) => {
+        const newExpanded = new Set(expandedGroups)
+        if (newExpanded.has(groupId)) {
+            newExpanded.delete(groupId)
+        } else {
+            newExpanded.add(groupId)
         }
-
-        const selectedTabsData = currentTabs.filter(tab => selectedTabs.has(tab.id))
-        const bookmarks = selectedTabsData.map(tab => ({
-            id: Date.now().toString() + Math.random(),
-            title: tab.title,
-            url: tab.url,
-            favIconUrl: tab.favIconUrl
-        }))
-
-        const newGroup: BookmarkGroup = {
-            id: Date.now().toString(),
-            name: newGroupName.trim(),
-            bookmarks,
-            createdAt: new Date().toISOString(),
-            color: getRandomColor()
-        }
-
-        const updatedGroups = [...bookmarkGroups, newGroup]
-        setBookmarkGroups(updatedGroups)
-        await StorageManager.set('bookmarkGroups', updatedGroups)
-
-        setNewGroupName('')
-        setSelectedTabs(new Set())
+        setExpandedGroups(newExpanded)
     }
 
-    const deleteBookmarkGroup = async (groupId: string) => {
-        const updatedGroups = bookmarkGroups.filter(group => group.id !== groupId)
-        setBookmarkGroups(updatedGroups)
-        await StorageManager.set('bookmarkGroups', updatedGroups)
-    }
-
-    const openBookmarkGroup = async (group: BookmarkGroup) => {
-        try {
-            for (const bookmark of group.bookmarks) {
-                await chrome.tabs.create({ url: bookmark.url, active: false })
+    const deleteTabFromGroup = async (groupId: string, tabId: number) => {
+        const updatedGroups = tabGroups.map(group => {
+            if (group.id === groupId) {
+                return {
+                    ...group,
+                    tabs: group.tabs.filter(tab => tab.id !== tabId)
+                }
             }
+            return group
+        }).filter(group => group.tabs.length > 0) // Remove empty groups
+
+        setTabGroups(updatedGroups)
+        await StorageManager.set('tabGroups', updatedGroups)
+    }
+
+    const openSingleTab = async (url: string) => {
+        try {
+            await chrome.tabs.create({ url, active: true })
         } catch (error) {
-            console.error('Error opening bookmark group:', error)
+            console.error('Error opening tab:', error)
         }
     }
 
@@ -275,10 +256,9 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
             </Card>
 
             <Tabs defaultValue="current" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="current">Current Tabs ({currentTabs.length})</TabsTrigger>
                     <TabsTrigger value="groups">Tab Groups ({tabGroups.length})</TabsTrigger>
-                    <TabsTrigger value="bookmarks">Bookmarks ({bookmarkGroups.length})</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="current" className="space-y-4">
@@ -325,14 +305,7 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
                                     <FolderOpen className="w-4 h-4 mr-2" />
                                     Create Tab Group
                                 </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={createBookmarkGroup}
-                                    disabled={!newGroupName.trim() || selectedTabs.size === 0}
-                                >
-                                    <Bookmark className="w-4 h-4 mr-2" />
-                                    Create Bookmarks
-                                </Button>
+
                             </div>
                         </CardContent>
                     </Card>
@@ -343,8 +316,8 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
                             <Card
                                 key={tab.id}
                                 className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${selectedTabs.has(tab.id)
-                                        ? 'ring-2 ring-blue-500 bg-blue-50'
-                                        : theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+                                    ? 'ring-2 ring-blue-500 bg-blue-50'
+                                    : theme === 'dark' ? 'bg-gray-800' : 'bg-white'
                                     }`}
                                 onClick={() => toggleTabSelection(tab.id)}
                             >
@@ -417,12 +390,24 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
                 </TabsContent>
 
                 <TabsContent value="groups" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         {tabGroups.map((group) => (
                             <Card key={group.id} className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
                                 <CardHeader>
                                     <CardTitle className="flex items-center justify-between">
                                         <div className="flex items-center space-x-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => toggleGroupExpansion(group.id)}
+                                                className="p-1"
+                                            >
+                                                {expandedGroups.has(group.id) ? (
+                                                    <ChevronDown className="w-4 h-4" />
+                                                ) : (
+                                                    <ChevronRight className="w-4 h-4" />
+                                                )}
+                                            </Button>
                                             <Folder className="w-5 h-5 text-blue-500" />
                                             <span>{group.name}</span>
                                             <Badge variant="secondary">{group.tabs.length} tabs</Badge>
@@ -432,6 +417,7 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
                                                 variant="outline"
                                                 size="sm"
                                                 onClick={() => openTabGroup(group)}
+                                                title="Open all tabs"
                                             >
                                                 <ExternalLink className="w-4 h-4" />
                                             </Button>
@@ -439,6 +425,7 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
                                                 variant="destructive"
                                                 size="sm"
                                                 onClick={() => deleteTabGroup(group.id)}
+                                                title="Delete group"
                                             >
                                                 <X className="w-4 h-4" />
                                             </Button>
@@ -446,28 +433,77 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="space-y-2">
-                                        {group.tabs.slice(0, 3).map((tab) => (
-                                            <div key={tab.id} className="flex items-center space-x-2 text-sm">
-                                                <img
-                                                    src={getFaviconUrl(tab.url) || ''}
-                                                    alt=""
-                                                    className="w-4 h-4 rounded"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        target.style.display = 'none'
-                                                    }}
-                                                />
-                                                <span className="truncate">{tab.title}</span>
-                                            </div>
-                                        ))}
-                                        {group.tabs.length > 3 && (
-                                            <p className="text-xs text-gray-500">
-                                                +{group.tabs.length - 3} more tabs
-                                            </p>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2">
+                                    {/* Show preview tabs when collapsed */}
+                                    {!expandedGroups.has(group.id) && (
+                                        <div className="space-y-2">
+                                            {group.tabs.slice(0, 3).map((tab) => (
+                                                <div key={tab.id} className="flex items-center space-x-2 text-sm">
+                                                    <img
+                                                        src={getFaviconUrl(tab.url) || ''}
+                                                        alt=""
+                                                        className="w-4 h-4 rounded"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement
+                                                            target.style.display = 'none'
+                                                        }}
+                                                    />
+                                                    <span className="truncate">{tab.title}</span>
+                                                </div>
+                                            ))}
+                                            {group.tabs.length > 3 && (
+                                                <p className="text-xs text-gray-500">
+                                                    +{group.tabs.length - 3} more tabs
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Show all tabs when expanded */}
+                                    {expandedGroups.has(group.id) && (
+                                        <div className="space-y-2">
+                                            {group.tabs.map((tab) => (
+                                                <div key={tab.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                                    <div
+                                                        className="flex items-center space-x-2 text-sm cursor-pointer flex-1"
+                                                        onClick={() => openSingleTab(tab.url)}
+                                                    >
+                                                        <img
+                                                            src={getFaviconUrl(tab.url) || ''}
+                                                            alt=""
+                                                            className="w-4 h-4 rounded"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                target.style.display = 'none'
+                                                                const fallback = target.nextElementSibling as HTMLElement
+                                                                if (fallback) fallback.style.display = 'flex'
+                                                            }}
+                                                        />
+                                                        <div className="hidden w-4 h-4 bg-gray-200 rounded flex items-center justify-center">
+                                                            <Globe className="w-3 h-3 text-gray-500" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="truncate font-medium">{tab.title}</div>
+                                                            <div className="truncate text-xs text-gray-500">{tab.url}</div>
+                                                        </div>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            deleteTabFromGroup(group.id, tab.id)
+                                                        }}
+                                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                        title="Remove tab from group"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <p className="text-xs text-gray-500 mt-3 pt-3 border-t">
                                         Created {new Date(group.createdAt).toLocaleDateString()}
                                     </p>
                                 </CardContent>
@@ -482,78 +518,6 @@ const TabbyManager: React.FC<TabbyManagerProps> = ({ theme }) => {
                                     <Folder className="w-12 h-12 mx-auto mb-4 opacity-50" />
                                     <p className="text-lg font-medium">No tab groups</p>
                                     <p className="text-sm">Select tabs and create your first group</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-                </TabsContent>
-
-                <TabsContent value="bookmarks" className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {bookmarkGroups.map((group) => (
-                            <Card key={group.id} className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-2">
-                                            <Bookmark className="w-5 h-5 text-yellow-500" />
-                                            <span>{group.name}</span>
-                                            <Badge variant="secondary">{group.bookmarks.length} bookmarks</Badge>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => openBookmarkGroup(group)}
-                                            >
-                                                <ExternalLink className="w-4 h-4" />
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                onClick={() => deleteBookmarkGroup(group.id)}
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
-                                        {group.bookmarks.slice(0, 3).map((bookmark) => (
-                                            <div key={bookmark.id} className="flex items-center space-x-2 text-sm">
-                                                <img
-                                                    src={getFaviconUrl(bookmark.url) || ''}
-                                                    alt=""
-                                                    className="w-4 h-4 rounded"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        target.style.display = 'none'
-                                                    }}
-                                                />
-                                                <span className="truncate">{bookmark.title}</span>
-                                            </div>
-                                        ))}
-                                        {group.bookmarks.length > 3 && (
-                                            <p className="text-xs text-gray-500">
-                                                +{group.bookmarks.length - 3} more bookmarks
-                                            </p>
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Created {new Date(group.createdAt).toLocaleDateString()}
-                                    </p>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-
-                    {bookmarkGroups.length === 0 && (
-                        <Card className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
-                            <CardContent className="pt-6">
-                                <div className="text-center py-8 text-gray-500">
-                                    <Bookmark className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                                    <p className="text-lg font-medium">No bookmark groups</p>
-                                    <p className="text-sm">Select tabs and create your first bookmark group</p>
                                 </div>
                             </CardContent>
                         </Card>

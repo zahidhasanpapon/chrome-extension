@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Plus, Shield, Globe, Trash2, AlertTriangle, ExternalLink, Download, Upload, FileText, Check } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Plus, Shield, Globe, Trash2, AlertTriangle, ExternalLink, Download, Upload, FileText, Check, Zap, X, Facebook, Youtube, Twitter, Instagram, ShieldOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,131 @@ const BlockedSitesList: React.FC<BlockedSitesListProps> = ({
     const [error, setError] = useState('')
     const [selectedSites, setSelectedSites] = useState<Set<string>>(new Set())
     const [showBulkActions, setShowBulkActions] = useState(false)
+    const [customShortcuts, setCustomShortcuts] = useState<any[]>([])
+    const [newShortcutName, setNewShortcutName] = useState('')
+    const [newShortcutUrl, setNewShortcutUrl] = useState('')
+    const [showAddForm, setShowAddForm] = useState(false)
+
+    const defaultShortcuts = [
+        {
+            name: 'Facebook',
+            url: 'facebook.com',
+            iconName: 'Facebook',
+            color: 'bg-blue-600',
+            category: 'social'
+        },
+        {
+            name: 'YouTube',
+            url: 'youtube.com',
+            iconName: 'Youtube',
+            color: 'bg-red-600',
+            category: 'social'
+        },
+        {
+            name: 'X (Twitter)',
+            url: 'x.com',
+            iconName: 'Twitter',
+            color: 'bg-black',
+            category: 'social'
+        },
+        {
+            name: 'Instagram',
+            url: 'instagram.com',
+            iconName: 'Instagram',
+            color: 'bg-pink-600',
+            category: 'social'
+        },
+        {
+            name: 'Reddit',
+            url: 'reddit.com',
+            iconName: 'Globe',
+            color: 'bg-orange-600',
+            category: 'social'
+        },
+        {
+            name: 'LinkedIn',
+            url: 'linkedin.com',
+            iconName: 'Globe',
+            color: 'bg-blue-700',
+            category: 'social'
+        }
+    ]
+
+    useEffect(() => {
+        loadCustomShortcuts()
+    }, [])
+
+    const loadCustomShortcuts = async () => {
+        try {
+            const result = await chrome.storage.local.get(['customShortcuts'])
+            setCustomShortcuts(result.customShortcuts || [])
+        } catch (error) {
+            console.error('Error loading custom shortcuts:', error)
+        }
+    }
+
+    const saveCustomShortcuts = async (shortcuts: any[]) => {
+        try {
+            await chrome.storage.local.set({ customShortcuts: shortcuts })
+            setCustomShortcuts(shortcuts)
+        } catch (error) {
+            console.error('Error saving custom shortcuts:', error)
+        }
+    }
+
+    const isBlocked = (url: string): boolean => {
+        return blockedSites.some(site => site.url === url)
+    }
+
+    const toggleSiteBlock = (site: any) => {
+        if (isBlocked(site.url)) {
+            onRemoveSite(site.url)
+        } else {
+            onAddSite(site.url)
+        }
+    }
+
+    const addCustomShortcut = () => {
+        if (!newShortcutName.trim() || !newShortcutUrl.trim()) {
+            return
+        }
+
+        const cleanUrl = newShortcutUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].toLowerCase()
+
+        const newShortcut = {
+            name: newShortcutName.trim(),
+            url: cleanUrl,
+            iconName: 'Globe',
+            color: 'bg-gray-600',
+            category: 'custom'
+        }
+
+        const updatedShortcuts = [...customShortcuts, newShortcut]
+        saveCustomShortcuts(updatedShortcuts)
+
+        setNewShortcutName('')
+        setNewShortcutUrl('')
+        setShowAddForm(false)
+    }
+
+    const removeCustomShortcut = (index: number) => {
+        const updatedShortcuts = customShortcuts.filter((_, i) => i !== index)
+        saveCustomShortcuts(updatedShortcuts)
+    }
+
+    const renderIcon = (iconName: string) => {
+        const iconProps = { className: "w-3 h-3" }
+        switch (iconName) {
+            case 'Facebook': return <Facebook {...iconProps} />
+            case 'Youtube': return <Youtube {...iconProps} />
+            case 'Twitter': return <Twitter {...iconProps} />
+            case 'Instagram': return <Instagram {...iconProps} />
+            case 'Globe': return <Globe {...iconProps} />
+            default: return <Globe {...iconProps} />
+        }
+    }
+
+    const allShortcuts = [...defaultShortcuts, ...customShortcuts]
 
     const handleAddSite = () => {
         if (!newSiteUrl.trim()) {
@@ -280,6 +405,124 @@ const BlockedSitesList: React.FC<BlockedSitesListProps> = ({
                                 <li>Subdomains will also be blocked (e.g., blocking "youtube.com" blocks "m.youtube.com")</li>
                                 <li>Use the most specific domain to avoid blocking unintended sites</li>
                             </ul>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Quick Block/Unblock */}
+            <Card className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white/80 backdrop-blur-sm'} border-white/20`}>
+                <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                            <Zap className="w-5 h-5 text-yellow-500" />
+                            <span>Quick Block/Unblock</span>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowAddForm(!showAddForm)}
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Custom
+                        </Button>
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {/* Add Custom Shortcut Form */}
+                    {showAddForm && (
+                        <div className="mb-4 p-3 border rounded-lg bg-gray-50 dark:bg-gray-700">
+                            <h4 className="text-sm font-semibold mb-2">Add Custom Shortcut</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <Input
+                                    placeholder="Site name (e.g., GitHub)"
+                                    value={newShortcutName}
+                                    onChange={(e) => setNewShortcutName(e.target.value)}
+                                    size="sm"
+                                />
+                                <Input
+                                    placeholder="Site URL (e.g., github.com)"
+                                    value={newShortcutUrl}
+                                    onChange={(e) => setNewShortcutUrl(e.target.value)}
+                                    size="sm"
+                                />
+                            </div>
+                            <div className="flex items-center space-x-2 mt-2">
+                                <Button
+                                    size="sm"
+                                    onClick={addCustomShortcut}
+                                    disabled={!newShortcutName.trim() || !newShortcutUrl.trim()}
+                                >
+                                    Add Shortcut
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShowAddForm(false)
+                                        setNewShortcutName('')
+                                        setNewShortcutUrl('')
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quick Shortcuts - No Categories */}
+                    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                        {allShortcuts.map((site, index) => {
+                            const blocked = isBlocked(site.url)
+                            return (
+                                <div key={index} className="relative">
+                                    <Button
+                                        variant={blocked ? "destructive" : "outline"}
+                                        size="sm"
+                                        className={`w-full h-auto p-2 flex flex-col items-center space-y-1 transition-all duration-200 ${blocked
+                                            ? 'bg-red-500 hover:bg-red-600 text-white'
+                                            : 'hover:shadow-md'
+                                            }`}
+                                        onClick={() => toggleSiteBlock(site)}
+                                    >
+                                        <div className={`p-1 rounded-full ${blocked ? 'bg-white/20' : site.color} text-white`}>
+                                            {blocked ? <ShieldOff className="w-3 h-3" /> : renderIcon(site.iconName)}
+                                        </div>
+                                        <div className="text-center">
+                                            <div className="text-xs font-medium truncate w-full">{site.name}</div>
+                                        </div>
+                                    </Button>
+
+                                    {/* Remove button for custom shortcuts */}
+                                    {site.category === 'custom' && (
+                                        <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            className="absolute -top-1 -right-1 w-4 h-4 rounded-full"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                removeCustomShortcut(customShortcuts.findIndex(s => s.url === site.url))
+                                            }}
+                                        >
+                                            <X className="w-2 h-2" />
+                                        </Button>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    {/* Stats */}
+                    <div className="mt-4 pt-3 border-t">
+                        <div className="flex items-center justify-between text-sm text-gray-600">
+                            <span>
+                                {blockedSites.filter(site =>
+                                    allShortcuts.some(shortcut => shortcut.url === site.url)
+                                ).length} of {allShortcuts.length} shortcuts blocked
+                            </span>
+                            <Badge variant="secondary">
+                                {allShortcuts.length} total shortcuts
+                            </Badge>
                         </div>
                     </div>
                 </CardContent>

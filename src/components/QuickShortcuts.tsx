@@ -27,7 +27,7 @@ interface QuickShortcutsProps {
 interface ShortcutSite {
     name: string
     url: string
-    icon: React.ReactNode
+    iconName: string
     color: string
     category: 'social' | 'entertainment' | 'news' | 'productivity' | 'custom'
 }
@@ -47,58 +47,44 @@ const QuickShortcuts: React.FC<QuickShortcutsProps> = ({
         {
             name: 'Facebook',
             url: 'facebook.com',
-            icon: <Facebook className="w-4 h-4" />,
+            iconName: 'Facebook',
             color: 'bg-blue-600',
             category: 'social'
         },
         {
             name: 'YouTube',
             url: 'youtube.com',
-            icon: <Youtube className="w-4 h-4" />,
+            iconName: 'Youtube',
             color: 'bg-red-600',
-            category: 'entertainment'
+            category: 'social'
         },
         {
-            name: 'Twitter',
-            url: 'twitter.com',
-            icon: <Twitter className="w-4 h-4" />,
-            color: 'bg-blue-400',
+            name: 'X (Twitter)',
+            url: 'x.com',
+            iconName: 'Twitter',
+            color: 'bg-black',
             category: 'social'
         },
         {
             name: 'Instagram',
             url: 'instagram.com',
-            icon: <Instagram className="w-4 h-4" />,
+            iconName: 'Instagram',
             color: 'bg-pink-600',
             category: 'social'
         },
         {
             name: 'Reddit',
             url: 'reddit.com',
-            icon: <Globe className="w-4 h-4" />,
+            iconName: 'Globe',
             color: 'bg-orange-600',
             category: 'social'
         },
         {
-            name: 'TikTok',
-            url: 'tiktok.com',
-            icon: <Globe className="w-4 h-4" />,
-            color: 'bg-black',
-            category: 'entertainment'
-        },
-        {
-            name: 'Netflix',
-            url: 'netflix.com',
-            icon: <Globe className="w-4 h-4" />,
-            color: 'bg-red-700',
-            category: 'entertainment'
-        },
-        {
             name: 'LinkedIn',
             url: 'linkedin.com',
-            icon: <Globe className="w-4 h-4" />,
+            iconName: 'Globe',
             color: 'bg-blue-700',
-            category: 'productivity'
+            category: 'social'
         }
     ]
 
@@ -146,7 +132,7 @@ const QuickShortcuts: React.FC<QuickShortcutsProps> = ({
         const newShortcut: ShortcutSite = {
             name: newShortcutName.trim(),
             url: cleanUrl,
-            icon: <Globe className="w-4 h-4" />,
+            iconName: 'Globe',
             color: 'bg-gray-600',
             category: 'custom'
         }
@@ -192,6 +178,18 @@ const QuickShortcuts: React.FC<QuickShortcutsProps> = ({
             case 'productivity': return 'text-purple-600'
             case 'custom': return 'text-gray-600'
             default: return 'text-gray-600'
+        }
+    }
+
+    const renderIcon = (iconName: string) => {
+        const iconProps = { className: "w-4 h-4" }
+        switch (iconName) {
+            case 'Facebook': return <Facebook {...iconProps} />
+            case 'Youtube': return <Youtube {...iconProps} />
+            case 'Twitter': return <Twitter {...iconProps} />
+            case 'Instagram': return <Instagram {...iconProps} />
+            case 'Globe': return <Globe {...iconProps} />
+            default: return <Globe {...iconProps} />
         }
     }
 
@@ -253,57 +251,46 @@ const QuickShortcuts: React.FC<QuickShortcutsProps> = ({
                     </div>
                 )}
 
-                {/* Shortcuts by Category */}
-                <div className="space-y-6">
-                    {Object.entries(groupedShortcuts).map(([category, shortcuts]) => (
-                        <div key={category}>
-                            <h3 className={`text-sm font-semibold mb-3 ${getCategoryColor(category)}`}>
-                                {getCategoryTitle(category)}
-                            </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                {shortcuts.map((site, index) => {
-                                    const blocked = isBlocked(site.url)
-                                    return (
-                                        <div key={`${category}-${index}`} className="relative">
-                                            <Button
-                                                variant={blocked ? "destructive" : "outline"}
-                                                className={`w-full h-auto p-3 flex flex-col items-center space-y-2 transition-all duration-200 ${blocked
-                                                        ? 'bg-red-500 hover:bg-red-600 text-white'
-                                                        : 'hover:shadow-md'
-                                                    }`}
-                                                onClick={() => toggleSiteBlock(site)}
-                                            >
-                                                <div className={`p-2 rounded-full ${blocked ? 'bg-white/20' : site.color} text-white`}>
-                                                    {blocked ? <ShieldOff className="w-4 h-4" /> : site.icon}
-                                                </div>
-                                                <div className="text-center">
-                                                    <div className="text-xs font-medium">{site.name}</div>
-                                                    <div className="text-xs opacity-75">
-                                                        {blocked ? 'Blocked' : 'Click to block'}
-                                                    </div>
-                                                </div>
-                                            </Button>
+                {/* Quick Shortcuts - No Categories */}
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                    {allShortcuts.map((site, index) => {
+                        const blocked = isBlocked(site.url)
+                        return (
+                            <div key={index} className="relative">
+                                <Button
+                                    variant={blocked ? "destructive" : "outline"}
+                                    size="sm"
+                                    className={`w-full h-auto p-2 flex flex-col items-center space-y-1 transition-all duration-200 ${blocked
+                                        ? 'bg-red-500 hover:bg-red-600 text-white'
+                                        : 'hover:shadow-md'
+                                        }`}
+                                    onClick={() => toggleSiteBlock(site)}
+                                >
+                                    <div className={`p-1 rounded-full ${blocked ? 'bg-white/20' : site.color} text-white`}>
+                                        {blocked ? <ShieldOff className="w-3 h-3" /> : renderIcon(site.iconName)}
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-xs font-medium truncate w-full">{site.name}</div>
+                                    </div>
+                                </Button>
 
-                                            {/* Remove button for custom shortcuts */}
-                                            {site.category === 'custom' && (
-                                                <Button
-                                                    variant="destructive"
-                                                    size="icon"
-                                                    className="absolute -top-2 -right-2 w-6 h-6 rounded-full"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        removeCustomShortcut(customShortcuts.findIndex(s => s.url === site.url))
-                                                    }}
-                                                >
-                                                    <X className="w-3 h-3" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    )
-                                })}
+                                {/* Remove button for custom shortcuts */}
+                                {site.category === 'custom' && (
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="absolute -top-1 -right-1 w-4 h-4 rounded-full"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            removeCustomShortcut(customShortcuts.findIndex(s => s.url === site.url))
+                                        }}
+                                    >
+                                        <X className="w-2 h-2" />
+                                    </Button>
+                                )}
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
 
                 {/* Stats */}
